@@ -1,0 +1,26 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace "com.symbol.profilepowermgrsample1"
+    compileSdkVersion 33
+    defaultConfig {
+        applicationId "com.symbol.profilepowermgrsample1"
+        minSdkVersion 24
+        targetSdkVersion 33
+        versionCode 10
+        versionName "11.0.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+dependencies {
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    compileOnly 'com.symbol:emdk:+'
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!--This is an auto generated document. Changes to this document may cause incorrect behavior.--><wap-provisioningdoc>
+  <characteristic type="ProfileInfo">
+    <parm name="created_wizard_version" value="14.0.0"/>
+  </characteristic>
+  <characteristic type="Profile">
+    <parm name="ProfileName" value="PowerMgrProfile-1"/>
+    <parm name="ModifiedDate" value="2025-10-17 16:43:27"/>
+    <characteristic type="PowerMgr" version="4.2">
+      <parm name="emdk_name" value="DO_NOTHING"/>
+    </characteristic>
+    <characteristic type="PowerMgr" version="4.2">
+      <parm name="emdk_name" value="SLEEP"/>
+      <parm name="ResetAction" value="1"/>
+    </characteristic>
+    <characteristic type="PowerMgr" version="4.2">
+      <parm name="emdk_name" value="REBOOT"/>
+      <parm name="ResetAction" value="4"/>
+    </characteristic>
+  </characteristic>
+</wap-provisioningdoc>
