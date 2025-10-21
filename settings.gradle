@@ -1,1 +1,2 @@
 include ':app'
+include ':zsdk_java_wrapper'

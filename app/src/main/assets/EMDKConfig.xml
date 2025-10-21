@@ -3,18 +3,48 @@
     <parm name="created_wizard_version" value="14.0.0"/>
   </characteristic>
   <characteristic type="Profile">
-    <parm name="ProfileName" value="PowerMgrProfile-1"/>
-    <parm name="ModifiedDate" value="2025-10-17 16:43:27"/>
+    <parm name="ProfileName" value="ProfileSleep"/>
+    <parm name="ModifiedDate" value="2025-10-21 00:57:53"/>
+    <parm name="TargetSystemVersion" value="4.2"/>
     <characteristic type="PowerMgr" version="4.2">
-      <parm name="emdk_name" value="DO_NOTHING"/>
-    </characteristic>
-    <characteristic type="PowerMgr" version="4.2">
-      <parm name="emdk_name" value="SLEEP"/>
+      <parm name="emdk_name" value="ProfileSleep"/>
       <parm name="ResetAction" value="1"/>
     </characteristic>
+  </characteristic>
+  <characteristic type="Profile">
+    <parm name="ProfileName" value="ProfileReboot"/>
+    <parm name="ModifiedDate" value="2025-10-21 01:07:32"/>
+    <parm name="TargetSystemVersion" value="4.2"/>
     <characteristic type="PowerMgr" version="4.2">
-      <parm name="emdk_name" value="REBOOT"/>
+      <parm name="emdk_name" value="ProfileReboot"/>
       <parm name="ResetAction" value="4"/>
+    </characteristic>
+  </characteristic>
+  <characteristic type="Profile">
+    <parm name="ProfileName" value="ProfileUpdate"/>
+    <parm name="ModifiedDate" value="2025-10-21 01:08:18"/>
+    <parm name="TargetSystemVersion" value="4.2"/>
+    <characteristic type="PowerMgr" version="4.2">
+      <parm name="emdk_name" value="ProfileUpdate"/>
+      <parm name="ResetAction" value="8"/>
+      <characteristic type="file-details">
+        <parm name="ZipFile" value="&quot;&quot;"/>
+      </characteristic>
+    </characteristic>
+  </characteristic>
+  <characteristic type="Profile">
+    <parm name="ProfileName" value="ProfileGrantPermission"/>
+    <parm name="ModifiedDate" value="2025-10-21 15:42:36"/>
+    <parm name="TargetSystemVersion" value="10.5"/>
+      
+    <characteristic type="AccessMgr" version="10.4">
+      <parm name="emdk_name" value="ProfileGrantPermission"/>
+      <parm name="OperationMode" value="2"/>
+      <parm name="SystemSettings" value="1"/>
+      <parm name="AllowSubmitXMLAction" value="2"/>
+      <parm name="PermissionAccessAction" value="1"/>
+      <parm name="PermissionAccessPermissionName" value="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+      <parm name="PermissionAccessPackageName" value="com.zebra.zsdkdemo"/>
     </characteristic>
   </characteristic>
 </wap-provisioningdoc>

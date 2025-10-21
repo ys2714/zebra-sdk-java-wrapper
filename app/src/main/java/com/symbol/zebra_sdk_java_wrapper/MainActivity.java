@@ -1,10 +1,13 @@
-package com.symbol.profilepowermgrsample1;
+package com.symbol.zebra_sdk_java_wrapper;
 
+import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.symbol.profilepowermgrsample1.databinding.ActivityOsupdateBinding;
+import com.symbol.zebra_sdk_java_wrapper.databinding.ActivityOsupdateBinding;
+import com.zebra.zsdk_java_wrapper.MXBase;
+import com.zebra.zsdk_java_wrapper.MXProfileProcessor;
 
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,9 +17,9 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
-public class MainActivity extends AppCompatActivity implements MXPowerManagerHelper.EventListener {
+public class MainActivity extends Activity implements MXBase.EventListener {
 
-    private MXPowerManagerHelper powerManagerHelper = null;
+    private MXProfileProcessor profileProcessor = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,8 +27,8 @@ public class MainActivity extends AppCompatActivity implements MXPowerManagerHel
 
         // Assign the profile name used in EMDKConfig.xml
         String profileName = "OSUpdateProfile";
-        powerManagerHelper = new MXPowerManagerHelper(this);
-        powerManagerHelper.setupEMDK(this, profileName);
+        profileProcessor = new MXProfileProcessor(this);
+        profileProcessor.connectEMDK(this);
 
         ActivityOsupdateBinding binding = ActivityOsupdateBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -45,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements MXPowerManagerHel
         // TODO Auto-generated method stub
         super.onDestroy();
         //Clean up the objects created by EMDK manager
-        powerManagerHelper.releaseEMDK();
+        profileProcessor.disconnectEMDK();
     }
 
     // Text View for displaying status of EMDK operations
@@ -74,14 +77,17 @@ public class MainActivity extends AppCompatActivity implements MXPowerManagerHel
                 int radioid = pwrRadioGroup.getCheckedRadioButtonId();
 
                 if (radioid == R.id.radioSuspend)
-                    powerManagerHelper.callFeature(MXPowerManagerHelper.Options.SLEEP_MODE, null);
+                    profileProcessor.processProfile(
+                            com.zebra.zsdk_java_wrapper.R.raw.profile_sleep, "ProfileSleep");
 
                 if (radioid == R.id.radioReset)
-                    powerManagerHelper.callFeature(MXPowerManagerHelper.Options.REBOOT, null);
+                    profileProcessor.processProfile(
+                            com.zebra.zsdk_java_wrapper.R.raw.profile_reboot, "ProfileReboot");
 
                 if (radioid == R.id.radioOSUpdate)
-                    powerManagerHelper.callFeature(MXPowerManagerHelper.Options.OS_UPDATE, zipFilePathEditText.getText().toString());
-
+                    profileProcessor.processProfile(
+                            com.zebra.zsdk_java_wrapper.R.raw.profile_update, "ProfileUpdate");
+                    // powerManagerHelper.callFeature(MXPowerManagerHelper.Options.OS_UPDATE, zipFilePathEditText.getText().toString());
             }
         });
     }
@@ -97,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements MXPowerManagerHel
     }
 
     @Override
-    public void onEMDKError(MXPowerManagerHelper.XMLErrorInfo errorInfo) {
+    public void onEMDKError(MXBase.ErrorInfo errorInfo) {
         if (errorInfo.errorType == "File Path") {
             Toast.makeText(this.getApplicationContext(), errorInfo.errorDescription,
                     Toast.LENGTH_SHORT).show();

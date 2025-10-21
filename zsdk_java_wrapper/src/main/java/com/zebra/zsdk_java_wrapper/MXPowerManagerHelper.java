@@ -1,4 +1,4 @@
-package com.symbol.profilepowermgrsample1;
+package com.zebra.zsdk_java_wrapper;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -14,67 +14,13 @@ import java.io.StringReader;
 
 public class MXPowerManagerHelper implements EMDKListener {
 
-    public interface EventListener {
-        void onEMDKSessionOpened();
-        void onEMDKSessionClosed();
-        void onEMDKError(XMLErrorInfo errorInfo);
-    }
-    // Initial Value of the Power Manager options to be executed in the
-    // onOpened() method when the EMDK is ready. Default Value set in the wizard
-    // is 0.
-    // 0 -> Do Nothing
-    // 1 -> Sleep Mode
-    // 4 -> Reboot
-    // 5 -> Enterprise Reset
-    // 6 -> Factory Reset
-    // 7 -> Full Device Wipe
-    // 8 -> OS Update
-
-    public enum Options {
-        CREATE_PROFILE(-1),
-        DO_NOTHING(0),
-        SLEEP_MODE(1),
-        REBOOT(4),
-        ENTERPRISE_RESET(5),
-        FACTORY_RESET(6),
-        FULL_DEVICE_WIPE(7),
-        OS_UPDATE(8);
-
-        private final int value;
-
-        Options(int value) {
-            this.value = value;
-        }
-    }
-
-    public static class XMLErrorInfo {
-        // Contains the parm-error name (sub-feature that has error)
-        String errorName = "";
-        // Contains the characteristic-error type (Root feature that has error)
-        String errorType = "";
-        // contains the error description for parm or characteristic error.
-        String errorDescription = "";
-
-        public String buildFailureMessage() {
-            String failureMessage = "";
-            if (!TextUtils.isEmpty(errorName) && !TextUtils.isEmpty(errorType))
-                failureMessage = errorName + " :" + "\n" + errorType + " :" + "\n"
-                        + errorDescription;
-            else if (!TextUtils.isEmpty(errorName))
-                failureMessage = errorName + " :" + "\n" + errorDescription;
-            else
-                failureMessage = errorType + " :" + "\n" + errorDescription;
-            return failureMessage;
-        }
-    }
-
     // contains status of the profile operation
     private String profileName = null;
-    private EventListener listener = null;
+    private MXBase.EventListener listener = null;
     private ProfileManager profileManager = null;
     private EMDKManager emdkManager = null;
 
-    public MXPowerManagerHelper(EventListener listener) {
+    public MXPowerManagerHelper(MXBase.EventListener listener) {
         this.listener = listener;
     }
 
@@ -105,7 +51,7 @@ public class MXPowerManagerHelper implements EMDKListener {
         profileManager = (ProfileManager) emdkManager
                 .getInstance(EMDKManager.FEATURE_TYPE.PROFILE);
 
-        callFeature(Options.CREATE_PROFILE, null);
+        callFeature(MXBase.PowerManagerOptions.CREATE_PROFILE, null);
 
         listener.onEMDKSessionOpened();
     }
@@ -119,7 +65,7 @@ public class MXPowerManagerHelper implements EMDKListener {
     private void handleEMDKResult(EMDKResults results) {
         // Get XML response as a String
         String statusXMLResponse = results.getStatusString();
-        XMLErrorInfo errorInfo = null;
+        MXBase.ErrorInfo errorInfo = null;
         try {
             // Create instance of XML Pull Parser to parse the response
             XmlPullParser parser = Xml.newPullParser();
@@ -138,8 +84,8 @@ public class MXPowerManagerHelper implements EMDKListener {
     }
 
     // Method to parse the XML response using XML Pull Parser
-    private XMLErrorInfo parseXML(XmlPullParser myParser) {
-        XMLErrorInfo errorInfo = null;
+    private MXBase.ErrorInfo parseXML(XmlPullParser myParser) {
+        MXBase.ErrorInfo errorInfo = null;
         int event;
         try {
             event = myParser.getEventType();
@@ -150,7 +96,7 @@ public class MXPowerManagerHelper implements EMDKListener {
                         // Get Status, error name and description in case of
                         // parm-error
                         if (name.equals("parm-error")) {
-                            errorInfo = new XMLErrorInfo();
+                            errorInfo = new MXBase.ErrorInfo();
                             errorInfo.errorName = myParser.getAttributeValue(null, "name");
                             errorInfo.errorDescription = myParser.getAttributeValue(null,
                                     "desc");
@@ -158,7 +104,7 @@ public class MXPowerManagerHelper implements EMDKListener {
                             // Get Status, error type and description in case of
                             // parm-error
                         } else if (name.equals("characteristic-error")) {
-                            errorInfo = new XMLErrorInfo();
+                            errorInfo = new MXBase.ErrorInfo();
                             errorInfo.errorType = myParser.getAttributeValue(null, "type");
                             errorInfo.errorDescription = myParser.getAttributeValue(null,
                                     "desc");
@@ -179,7 +125,7 @@ public class MXPowerManagerHelper implements EMDKListener {
 
     // Method that applies the modified settings to the EMDK Profile based on
     // user selected options of Power Manager feature.
-    public void callFeature(Options option, String zipFilePath) {
+    public void callFeature(MXBase.PowerManagerOptions option, String zipFilePath) {
         int value = option.value;
 
         if (profileManager == null) {
@@ -189,15 +135,15 @@ public class MXPowerManagerHelper implements EMDKListener {
 
         // Prepare XML to modify the existing profile
         String[] modifyData = new String[1];
-        if (option == Options.CREATE_PROFILE) {
+        if (option == MXBase.PowerManagerOptions.CREATE_PROFILE) {
             // Call processPrfoile with profile name and SET flag to create the
             // profile. The modifyData can be null.
-        } else if (option == Options.OS_UPDATE) {
+        } else if (option == MXBase.PowerManagerOptions.OS_UPDATE) {
             // String that gets the path of the OS Update Package from Edit Text
             // If the OS Package path entered by user is empty then display
             // a Toast
             if (TextUtils.isEmpty(zipFilePath)) {
-                XMLErrorInfo errorInfo = new XMLErrorInfo();
+                MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
                 errorInfo.errorType = "File Path";
                 errorInfo.errorName = "Incorrect Path";
                 errorInfo.errorDescription = "Incorrect File Path...";
@@ -218,7 +164,6 @@ public class MXPowerManagerHelper implements EMDKListener {
                     + "&lt;/characteristic&gt;" + "&lt;/characteristic&gt;"
                     + "&lt;/characteristic&gt;";
 
-
         } else {
             // Modified XML input for Sleep and Reboot feature based on user
             // selected options of radio button
@@ -237,7 +182,7 @@ public class MXPowerManagerHelper implements EMDKListener {
         EMDKResults results = profileManager.processProfile(profileName,
                 ProfileManager.PROFILE_FLAG.SET, modifyData);
 
-        if (option == Options.CREATE_PROFILE) {
+        if (option == MXBase.PowerManagerOptions.CREATE_PROFILE) {
             return;
         }
 
@@ -245,13 +190,13 @@ public class MXPowerManagerHelper implements EMDKListener {
             // Method call to handle EMDKResult
             handleEMDKResult(results);
         } else if (results.statusCode == EMDKResults.STATUS_CODE.FAILURE) {
-            XMLErrorInfo errorInfo = new XMLErrorInfo();
+            MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
             errorInfo.errorType = "set profile";
             errorInfo.errorName = "set profile error";
             errorInfo.errorDescription = results.statusCode.toString();
             listener.onEMDKError(errorInfo);
         } else {
-            XMLErrorInfo errorInfo = new XMLErrorInfo();
+            MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
             errorInfo.errorType = "set profile";
             errorInfo.errorName = "unknown error";
             errorInfo.errorDescription = results.statusCode.toString();

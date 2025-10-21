@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wap-provisioningdoc>
+    <characteristic type="Profile">
+        <parm name="ProfileName" value="ProfileSleep"/>
+        <characteristic type="PowerMgr" version="4.2">
+            <parm name="ResetAction" value="1"/>
+        </characteristic>
+    </characteristic>
+</wap-provisioningdoc>

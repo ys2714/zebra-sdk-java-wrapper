@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.symbol.profilepowermgrsample1"
-    compileSdkVersion 33
+    namespace "com.symbol.zebra_sdk_java_wrapper"
+    compileSdkVersion 36
     defaultConfig {
         applicationId "com.symbol.profilepowermgrsample1"
-        minSdkVersion 24
-        targetSdkVersion 33
+        minSdkVersion 19
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 36
         versionCode 10
         versionName "11.0.0"
     }
@@ -22,5 +23,5 @@ android {
 }
 dependencies {
     implementation 'com.android.support:appcompat-v7:28.0.0'
-    compileOnly 'com.symbol:emdk:+'
+    implementation project(':zsdk_java_wrapper')
 }
