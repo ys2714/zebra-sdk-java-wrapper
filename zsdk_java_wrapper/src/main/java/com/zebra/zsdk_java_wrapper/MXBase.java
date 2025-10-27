@@ -7,6 +7,7 @@ public class MXBase {
     public interface EventListener {
         void onEMDKSessionOpened();
         void onEMDKSessionClosed();
+        void onEMDKProcessProfileSuccess(String profileName);
         void onEMDKError(ErrorInfo errorInfo);
     }
 

@@ -103,6 +103,11 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     }
 
     @Override
+    public void onEMDKProcessProfileSuccess(String profileName) {
+        statusTextView.setText("EMDK process profile success: " + profileName);
+    }
+
+    @Override
     public void onEMDKError(MXBase.ErrorInfo errorInfo) {
         if (errorInfo.errorType == "File Path") {
             Toast.makeText(this.getApplicationContext(), errorInfo.errorDescription,

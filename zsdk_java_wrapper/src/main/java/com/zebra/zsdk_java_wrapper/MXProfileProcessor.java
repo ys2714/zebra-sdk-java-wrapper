@@ -22,6 +22,7 @@ public class MXProfileProcessor {
         public void onOpened(EMDKManager emdkManager) {
             MXProfileProcessor.this.emdkManager = emdkManager;
             MXProfileProcessor.this.profileManager = (ProfileManager) emdkManager.getInstance(EMDKManager.FEATURE_TYPE.PROFILE);
+            MXProfileProcessor.this.listener.onEMDKSessionOpened();
         }
 
         @Override
@@ -30,6 +31,7 @@ public class MXProfileProcessor {
                 MXProfileProcessor.this.emdkManager.release();
                 MXProfileProcessor.this.emdkManager = null;
             }
+            MXProfileProcessor.this.listener.onEMDKSessionClosed();
         }
     }
 
@@ -62,6 +64,10 @@ public class MXProfileProcessor {
         }else {
             //EMDKManager object creation failed
             //Status: EMDK object creation failed
+            MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
+            errorInfo.errorType = "EMDKManager";
+            errorInfo.errorDescription = "EMDKManager object creation failed";
+            this.listener.onEMDKError(errorInfo);
         }
     }
 
@@ -79,7 +85,7 @@ public class MXProfileProcessor {
     // please use: com.zebra.zsdk_java_wrapper.R
     public void processProfile(int profileResId, String profileName) {
         String command1 = XMLReader.readXmlFileToString(this.context, profileResId);
-        ProcessProfileTask.build(profileManager, profileName).execute(command1);
+        new ProcessProfileTask(profileName).execute(command1);
     }
 
     // Method to parse the XML response using XML Pull Parser
@@ -122,22 +128,18 @@ public class MXProfileProcessor {
         return errorInfo;
     }
 
-    private static class ProcessProfileTask extends AsyncTask<String, Void, EMDKResults> {
+    private class ProcessProfileTask extends AsyncTask<String, Void, EMDKResults> {
 
-        private String profileName = null;
-        private ProfileManager profileManager = null;
+        private String profileName = "";
 
-        static ProcessProfileTask build(ProfileManager profileManager, String profileName) {
-            ProcessProfileTask task = new ProcessProfileTask();
-            task.profileName = profileName;
-            task.profileManager = profileManager;
-            return task;
+        ProcessProfileTask(String profileName) {
+            this.profileName = profileName;
         }
 
         @Override
         protected EMDKResults doInBackground(String... params) {
             //Call process profile to modify the profile of specified profile name
-            EMDKResults results = profileManager.processProfile(profileName, ProfileManager.PROFILE_FLAG.SET, params);
+            EMDKResults results = profileManager.processProfile(this.profileName, ProfileManager.PROFILE_FLAG.SET, params);
             return results;
         }
 
@@ -165,17 +167,19 @@ public class MXProfileProcessor {
 
                     if (errorInfo == null) {
                         resultString = "Profile update success.";
+                        MXProfileProcessor.this.listener.onEMDKProcessProfileSuccess(profileName);
                     }
                     else {
-
-                        // resultString = "Profile update failed." + errorString;
+                        MXProfileProcessor.this.listener.onEMDKError(errorInfo);
                     }
 
                 } catch (XmlPullParserException e) {
                     resultString =  e.getMessage();
+                    MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
+                    errorInfo.errorType = "XmlPullParserException";
+                    errorInfo.errorDescription = resultString;
+                    MXProfileProcessor.this.listener.onEMDKError(errorInfo);
                 }
-            } else {
-                // resultString = results.getStatusString();
             }
         }
     }
