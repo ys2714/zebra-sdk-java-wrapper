@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "com.symbol.zsdkdemo"
-    compileSdkVersion 36
+    compileSdkVersion 33
     defaultConfig {
         // applicationId "com.symbol.zsdkdemo"
         minSdkVersion 29
