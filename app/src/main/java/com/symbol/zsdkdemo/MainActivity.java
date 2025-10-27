@@ -1,13 +1,16 @@
-package com.symbol.zebra_sdk_java_wrapper;
+package com.symbol.zsdkdemo;
 
+import android.Manifest;
 import android.app.Activity;
-import android.support.v7.app.AppCompatActivity;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 
-import com.symbol.zebra_sdk_java_wrapper.databinding.ActivityOsupdateBinding;
-import com.zebra.zsdk_java_wrapper.MXBase;
-import com.zebra.zsdk_java_wrapper.MXProfileProcessor;
+import com.symbol.zsdkdemo.databinding.ActivityMainBinding;
+import com.zebra.zsdk_java_wrapper.mx.MXBase;
+import com.zebra.zsdk_java_wrapper.mx.MXProfileProcessor;
+import com.zebra.zsdk_java_wrapper.oeminfo.OEMInfoHelper;
+import com.zebra.zsdk_java_wrapper.oeminfo.PackageManagerHelper;
 
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,20 +20,19 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
+import java.io.File;
+import java.util.Objects;
+
 public class MainActivity extends Activity implements MXBase.EventListener {
 
     private MXProfileProcessor profileProcessor = null;
+    private OEMInfoHelper oemInfoHelper = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Assign the profile name used in EMDKConfig.xml
-        String profileName = "OSUpdateProfile";
-        profileProcessor = new MXProfileProcessor(this);
-        profileProcessor.connectEMDK(this);
-
-        ActivityOsupdateBinding binding = ActivityOsupdateBinding.inflate(getLayoutInflater());
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         // References of the UI elements
@@ -41,6 +43,14 @@ public class MainActivity extends Activity implements MXBase.EventListener {
         // Set on Click listener to the set button to execute Power Manager
         // operations
         addSetButtonListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        oemInfoHelper = new OEMInfoHelper(this);
+        profileProcessor = new MXProfileProcessor(this);
+        profileProcessor.connectEMDK(this);
     }
 
     @Override
@@ -61,6 +71,27 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     // external SD Card
     private EditText zipFilePathEditText;
 
+    private void getSerialPermission() {
+        String hex = PackageManagerHelper.getPackageSignatureHex(this);
+        String name = this.getPackageName();
+        profileProcessor.callAccessManagerAllowCallService(
+           "content://oem_info/oem.zebra.secure/build_serial",
+           name,
+           hex
+        );
+    }
+
+    private void getWriteExternalPermission() {
+        String hex = PackageManagerHelper.getPackageSignatureHex(this);
+        String name = this.getPackageName();
+        profileProcessor.callAccessManagerAllowPermission(
+                MXBase.EPermissionType.ALL_DANGEROUS_PERMISSIONS.toString(),
+               name,
+               this.getApplication().getClass().getName(),
+               hex
+        );
+    }
+
     // Method to set on click listener on the Set Button
     private void addSetButtonListener() {
 
@@ -77,17 +108,13 @@ public class MainActivity extends Activity implements MXBase.EventListener {
                 int radioid = pwrRadioGroup.getCheckedRadioButtonId();
 
                 if (radioid == R.id.radioSuspend)
-                    profileProcessor.processProfile(
-                            com.zebra.zsdk_java_wrapper.R.raw.profile_sleep, "ProfileSleep");
+                    profileProcessor.callPowerManagerFeature(MXBase.PowerManagerOptions.SLEEP_MODE);
 
                 if (radioid == R.id.radioReset)
-                    profileProcessor.processProfile(
-                            com.zebra.zsdk_java_wrapper.R.raw.profile_reboot, "ProfileReboot");
+                    profileProcessor.callPowerManagerFeature(MXBase.PowerManagerOptions.REBOOT);
 
                 if (radioid == R.id.radioOSUpdate)
-                    profileProcessor.processProfile(
-                            com.zebra.zsdk_java_wrapper.R.raw.profile_update, "ProfileUpdate");
-                    // powerManagerHelper.callFeature(MXPowerManagerHelper.Options.OS_UPDATE, zipFilePathEditText.getText().toString());
+                    profileProcessor.callPowerManagerFeature(MXBase.PowerManagerOptions.OS_UPDATE);
             }
         });
     }
@@ -95,6 +122,7 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     @Override
     public void onEMDKSessionOpened() {
         statusTextView.setText("EMDK open success.");
+        getWriteExternalPermission();
     }
 
     @Override
@@ -105,6 +133,12 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     @Override
     public void onEMDKProcessProfileSuccess(String profileName) {
         statusTextView.setText("EMDK process profile success: " + profileName);
+        if ("AccessManagerAllowCallService" == profileName) {
+            oemInfoHelper.getSerialNumber(this);
+
+        } else if ("AccessManagerAllowPermission" == profileName) {
+            getSerialPermission();
+        }
     }
 
     @Override
@@ -114,7 +148,7 @@ public class MainActivity extends Activity implements MXBase.EventListener {
                     Toast.LENGTH_SHORT).show();
         } else {
             // Show dialog of Failure
-            AlertDialog.Builder builder = new AlertDialog.Builder(this.getApplicationContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(errorInfo.errorName);
             builder.setMessage(errorInfo.errorDescription).setPositiveButton(
                     "OK", new DialogInterface.OnClickListener() {
@@ -126,4 +160,18 @@ public class MainActivity extends Activity implements MXBase.EventListener {
             alertDialog.show();
         }
     }
+
+    @Override
+    public void onEMDKFetchContentProviderSuccess(String uri, String value) {
+       if (uri == "content://oem_info/oem.zebra.secure/build_serial") {
+           setTitle("Device Serial:" + value);
+           statusTextView.setText("get device serial number success:" + value);
+           if (checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_GRANTED) {
+               Toast.makeText(this, "Granted WRITE_EXTERNAL_STORAGE permission", Toast.LENGTH_LONG).show();
+               oemInfoHelper.writeDataToExternalStorage(this, "serial-number.txt", value);
+           }
+       }
+    }
+
+
 }

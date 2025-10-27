@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="com.symbol.emdk.permission.EMDK" />
+    <!-- Zebra Content Provider API -->
+    <uses-permission android:name="com.zebra.provider.READ" />
     <queries>
         <package android:name="com.symbol.emdk.emdkservice" />
+        <!-- Zebra Content Provider API -->
+        <package android:name="com.zebra.zebracontentprovider" />
     </queries>
     <application>
         <uses-library android:name="com.symbol.emdk" />

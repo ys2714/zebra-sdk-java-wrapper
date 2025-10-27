@@ -1,4 +1,4 @@
-package com.zebra.zsdk_java_wrapper;
+package com.zebra.zsdk_java_wrapper.mx;
 
 import android.content.Context;
 
@@ -10,6 +10,10 @@ import java.io.InputStreamReader;
 public class XMLReader {
 
     public static String readXmlFileToString(Context context, int resourceId) {
+        return readXmlFileToString(context, resourceId, false);
+    }
+
+    public static String readXmlFileToString(Context context, int resourceId, boolean newline) {
         StringBuilder stringBuilder = new StringBuilder();
         InputStream inputStream = null;
         BufferedReader reader = null;
@@ -19,8 +23,10 @@ public class XMLReader {
             reader = new BufferedReader(new InputStreamReader(inputStream));
             String line;
             while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-                stringBuilder.append("\n"); // Add newline back if desired
+                stringBuilder.append(line.trim());
+                if (newline) {
+                    stringBuilder.append("\n"); // Add newline back if desired
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -30,3 +30,7 @@ android {
 dependencies {
     implementation 'com.symbol:emdk:11.0.134'
 }
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+}

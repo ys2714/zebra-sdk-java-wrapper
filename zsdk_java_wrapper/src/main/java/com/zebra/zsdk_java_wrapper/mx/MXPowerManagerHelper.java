@@ -1,4 +1,4 @@
-package com.zebra.zsdk_java_wrapper;
+package com.zebra.zsdk_java_wrapper.mx;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -12,31 +12,15 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.StringReader;
 
-public class MXAccessManagerHelper implements EMDKListener {
+public class MXPowerManagerHelper implements EMDKListener {
 
-    public enum Options {
-        CREATE_PROFILE(-1),
-        DO_NOTHING(0),
-        SLEEP_MODE(1),
-        REBOOT(4),
-        ENTERPRISE_RESET(5),
-        FACTORY_RESET(6),
-        FULL_DEVICE_WIPE(7),
-        OS_UPDATE(8);
-
-        private final int value;
-
-        Options(int value) {
-            this.value = value;
-        }
-    }
-
+    // contains status of the profile operation
     private String profileName = null;
     private MXBase.EventListener listener = null;
     private ProfileManager profileManager = null;
     private EMDKManager emdkManager = null;
 
-    public MXAccessManagerHelper(MXBase.EventListener listener) {
+    public MXPowerManagerHelper(MXBase.EventListener listener) {
         this.listener = listener;
     }
 
@@ -67,7 +51,7 @@ public class MXAccessManagerHelper implements EMDKListener {
         profileManager = (ProfileManager) emdkManager
                 .getInstance(EMDKManager.FEATURE_TYPE.PROFILE);
 
-        callFeature(MXAccessManagerHelper.Options.CREATE_PROFILE, null);
+        callFeature(MXBase.PowerManagerOptions.CREATE_PROFILE, null);
 
         listener.onEMDKSessionOpened();
     }
@@ -141,7 +125,7 @@ public class MXAccessManagerHelper implements EMDKListener {
 
     // Method that applies the modified settings to the EMDK Profile based on
     // user selected options of Power Manager feature.
-    public void callFeature(MXAccessManagerHelper.Options option, String zipFilePath) {
+    public void callFeature(MXBase.PowerManagerOptions option, String zipFilePath) {
         int value = option.value;
 
         if (profileManager == null) {
@@ -151,10 +135,10 @@ public class MXAccessManagerHelper implements EMDKListener {
 
         // Prepare XML to modify the existing profile
         String[] modifyData = new String[1];
-        if (option == MXAccessManagerHelper.Options.CREATE_PROFILE) {
+        if (option == MXBase.PowerManagerOptions.CREATE_PROFILE) {
             // Call processPrfoile with profile name and SET flag to create the
             // profile. The modifyData can be null.
-        } else if (option == MXAccessManagerHelper.Options.OS_UPDATE) {
+        } else if (option == MXBase.PowerManagerOptions.OS_UPDATE) {
             // String that gets the path of the OS Update Package from Edit Text
             // If the OS Package path entered by user is empty then display
             // a Toast
@@ -180,7 +164,6 @@ public class MXAccessManagerHelper implements EMDKListener {
                     + "&lt;/characteristic&gt;" + "&lt;/characteristic&gt;"
                     + "&lt;/characteristic&gt;";
 
-
         } else {
             // Modified XML input for Sleep and Reboot feature based on user
             // selected options of radio button
@@ -199,7 +182,7 @@ public class MXAccessManagerHelper implements EMDKListener {
         EMDKResults results = profileManager.processProfile(profileName,
                 ProfileManager.PROFILE_FLAG.SET, modifyData);
 
-        if (option == MXAccessManagerHelper.Options.CREATE_PROFILE) {
+        if (option == MXBase.PowerManagerOptions.CREATE_PROFILE) {
             return;
         }
 

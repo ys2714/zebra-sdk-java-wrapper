@@ -1,5 +1,6 @@
-package com.zebra.zsdk_java_wrapper;
+package com.zebra.zsdk_java_wrapper.mx;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Xml;
@@ -8,11 +9,14 @@ import com.symbol.emdk.EMDKManager;
 import com.symbol.emdk.EMDKResults;
 import com.symbol.emdk.ProfileManager;
 import com.symbol.emdk.EMDKManager.EMDKListener;
+import com.zebra.zsdk_java_wrapper.R;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MXProfileProcessor {
 
@@ -46,6 +50,8 @@ public class MXProfileProcessor {
     private MXBase.EventListener listener = null;
 
     private Context context = null;
+
+    private ProcessProfileTask currentTask = null;
 
     public MXProfileProcessor(MXBase.EventListener listener) {
         this.listener = listener;
@@ -82,10 +88,93 @@ public class MXProfileProcessor {
         }
     }
 
-    // please use: com.zebra.zsdk_java_wrapper.R
+    public void callAccessManagerAllowCallService(String serviceIdentifier, String callerPackageName, String callerSignature) {
+        Map<String, String> map = new HashMap<>();
+        map.put(MXConst.serviceIdentifier, serviceIdentifier);
+        map.put(MXConst.callerPackageName, callerPackageName);
+        map.put(MXConst.callerSignature, callerSignature);
+        processProfile(R.raw.profile_access_manager_allow_call_service, MXConst.AccessManagerAllowCallService, map);
+    }
+
+    public void callAccessManagerAllowPermission(String permissionName, String appPackageName, String appClassName, String appSignature) {
+        Map<String, String> map = new HashMap<>();
+        map.put(MXConst.permissionAccessPermissionName, permissionName);
+        map.put(MXConst.permissionAccessAction, "1"); // 1: allow
+        map.put(MXConst.permissionAccessPackageName, appPackageName);
+        map.put(MXConst.applicationClassName, appClassName);
+        map.put(MXConst.permissionAccessSignature, appSignature);
+        processProfile(R.raw.profile_access_manager_allow_permission, MXConst.AccessManagerAllowPermission, map);
+    }
+
+    public void callAppManagerInstallAndStart(String apkPath, String packageName, String mainActivity) {
+        Map<String, String> map = new HashMap<>();
+        map.put("apkFilePath", apkPath);
+        map.put("appPackageName", packageName);
+        map.put("mainActivityClass", mainActivity);
+        processProfile(R.raw.profile_app_manager_install_and_start, MXConst.AppManagerInstallAndStart, map);
+    }
+
+    public void callPowerManagerFeature(MXBase.PowerManagerOptions option) {
+        callPowerManagerFeature(option, null);
+    }
+
+    public void callPowerManagerFeature(MXBase.PowerManagerOptions option, String osZipFilePath) {
+        Map<String, String> map = new HashMap<>();
+        switch (option) {
+            case CREATE_PROFILE:
+                break;
+            case DO_NOTHING:
+                break;
+            case SLEEP_MODE:
+                map.put(MXConst.resetAction, option.valueString());
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+            case REBOOT:
+                map.put(MXConst.resetAction, option.valueString());
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+            case ENTERPRISE_RESET:
+                map.put(MXConst.resetAction, option.valueString());
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+            case FACTORY_RESET:
+                map.put(MXConst.resetAction, option.valueString());
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+            case FULL_DEVICE_WIPE:
+                map.put(MXConst.resetAction, option.valueString());
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+            case OS_UPDATE:
+                map.put(MXConst.resetAction, option.valueString());
+                map.put(MXConst.zipFile, osZipFilePath);
+                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                break;
+        }
+    }
+
     public void processProfile(int profileResId, String profileName) {
-        String command1 = XMLReader.readXmlFileToString(this.context, profileResId);
-        new ProcessProfileTask(profileName).execute(command1);
+        processProfile(profileResId, profileName, null);
+    }
+
+    // please use: com.zebra.zsdk_java_wrapper.R
+    public void processProfile(int profileResId, String profileName, Map<String, String> params) {
+        String command1 = XMLReader.readXmlFileToString(this.context, profileResId).trim();
+        if (params != null) {
+            for (String key : params.keySet()) {
+                String placeholder = "${"+key+"}" ;
+                String value = params.get(key);
+                if (value != null && command1.contains(placeholder)) {
+                   command1 = command1.replace(placeholder, value);
+                }
+            }
+        }
+        if (currentTask != null) {
+            currentTask.cancel(true);
+            currentTask = null;
+        }
+        currentTask = new ProcessProfileTask(profileName);
+        currentTask.execute(command1.trim());
     }
 
     // Method to parse the XML response using XML Pull Parser
@@ -128,6 +217,7 @@ public class MXProfileProcessor {
         return errorInfo;
     }
 
+    @SuppressLint("StaticFieldLeak")
     private class ProcessProfileTask extends AsyncTask<String, Void, EMDKResults> {
 
         private String profileName = "";
@@ -150,6 +240,10 @@ public class MXProfileProcessor {
 
             String resultString = "";
 
+            if (results.statusCode == EMDKResults.STATUS_CODE.SUCCESS) {
+                MXProfileProcessor.this.listener.onEMDKProcessProfileSuccess(profileName);
+                return;
+            }
             //Check the return status of processProfile
             if(results.statusCode == EMDKResults.STATUS_CODE.CHECK_XML) {
 

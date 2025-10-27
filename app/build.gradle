@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.symbol.zebra_sdk_java_wrapper"
-    compileSdkVersion 36
+    namespace "com.symbol.zsdkdemo"
+    compileSdkVersion 33
     defaultConfig {
-        applicationId "com.symbol.profilepowermgrsample1"
+        // applicationId "com.symbol.zsdkdemo"
         minSdkVersion 29
         //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 36
+        targetSdkVersion 33
         versionCode 10
         versionName "11.0.0"
     }
