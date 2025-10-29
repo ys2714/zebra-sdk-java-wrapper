@@ -17,6 +17,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class MXProfileProcessor {
 
@@ -169,7 +170,7 @@ public class MXProfileProcessor {
                 }
             }
         }
-        if (currentTask != null) {
+        if (currentTask != null && currentTask.getProfileName() == profileName) {
             currentTask.cancel(true);
             currentTask = null;
         }
@@ -224,6 +225,10 @@ public class MXProfileProcessor {
 
         ProcessProfileTask(String profileName) {
             this.profileName = profileName;
+        }
+
+        public String getProfileName() {
+            return profileName;
         }
 
         @Override
