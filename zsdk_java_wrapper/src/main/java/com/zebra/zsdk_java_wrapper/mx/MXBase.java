@@ -4,12 +4,20 @@ import android.text.TextUtils;
 
 public class MXBase {
 
+    public interface FetchOEMInfoCallback {
+        void onSuccess(String result);
+        void onError();
+    }
+
+    public interface ProcessProfileCallback {
+        void onSuccess(String profileName);
+        void onError(ErrorInfo errorInfo);
+    }
+
     public interface EventListener {
         void onEMDKSessionOpened();
         void onEMDKSessionClosed();
-        void onEMDKProcessProfileSuccess(String profileName);
         void onEMDKError(ErrorInfo errorInfo);
-        void onEMDKFetchContentProviderSuccess(String uri, String value);
     }
 
     public static class ErrorInfo {

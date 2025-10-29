@@ -1,4 +1,4 @@
-package com.zebra.zsdk_java_wrapper.oeminfo;
+package com.zebra.zsdk_java_wrapper.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -9,12 +9,9 @@ import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-
 public class PackageManagerHelper {
 
-    public static String getPackageSignatureHex(Context cx) {
+    public static String getPackageSignature(Context cx) {
         try {
             String hex = getSigningCertBase64(cx);
             return hex;
@@ -24,16 +21,12 @@ public class PackageManagerHelper {
         }
     }
 
-    public static String getSigningCertBase64(Context cx) throws PackageManager.NameNotFoundException, DecoderException {
-        //convert String to char array (1st step)
-        char[] charArray = getSigningCertificateHex(cx)[0].toChars();
+    public static String getSigningCertBase64(Context cx) throws PackageManager.NameNotFoundException {
+        Signature sig = getSigningCertificateHex(cx)[0];
 
-        // decode the char array to byte[] (2nd step)
-        byte[] decodedHex = Hex.decodeHex(charArray);
+        byte[] byteArray = sig.toByteArray();
 
-        // The String decoded to Base64 (3rd step)
-        // return Base64.encodeBase64String(decodedHex); -> Throws error on Android 8
-        return android.util.Base64.encodeToString(decodedHex, Base64.NO_WRAP);
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP);
     }
 
     @SuppressLint("PackageManagerGetSignatures")

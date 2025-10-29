@@ -1,16 +1,13 @@
 package com.symbol.zsdkdemo;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 
 import com.symbol.zsdkdemo.databinding.ActivityMainBinding;
 import com.zebra.zsdk_java_wrapper.mx.MXBase;
 import com.zebra.zsdk_java_wrapper.mx.MXProfileProcessor;
-import com.zebra.zsdk_java_wrapper.oeminfo.OEMInfoHelper;
-import com.zebra.zsdk_java_wrapper.oeminfo.PackageManagerHelper;
+import com.zebra.zsdk_java_wrapper.utils.PackageManagerHelper;
 
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,13 +17,9 @@ import android.widget.Toast;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 
-import java.io.File;
-import java.util.Objects;
-
 public class MainActivity extends Activity implements MXBase.EventListener {
 
     private MXProfileProcessor profileProcessor = null;
-    private OEMInfoHelper oemInfoHelper = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +30,8 @@ public class MainActivity extends Activity implements MXBase.EventListener {
 
         // References of the UI elements
         statusTextView = (TextView) findViewById(R.id.textViewStatus);
+        serialNumberTextView = (TextView) findViewById(R.id.textViewSerialNumber);
+        imeiTextView = (TextView) findViewById(R.id.textViewIMEI);
         pwrRadioGroup = (RadioGroup) findViewById(R.id.radioGroupPwr);
         zipFilePathEditText = (EditText) findViewById(R.id.et_zip_file_path);
 
@@ -48,7 +43,6 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     @Override
     protected void onResume() {
         super.onResume();
-        oemInfoHelper = new OEMInfoHelper(this);
         profileProcessor = new MXProfileProcessor(this);
         profileProcessor.connectEMDK(this);
     }
@@ -63,6 +57,8 @@ public class MainActivity extends Activity implements MXBase.EventListener {
 
     // Text View for displaying status of EMDK operations
     private TextView statusTextView = null;
+    private TextView serialNumberTextView = null;
+    private TextView imeiTextView = null;
 
     // Radio Group to hold Radio Buttons for Power Manager Options
     private RadioGroup pwrRadioGroup = null;
@@ -71,26 +67,7 @@ public class MainActivity extends Activity implements MXBase.EventListener {
     // external SD Card
     private EditText zipFilePathEditText;
 
-    private void getSerialPermission() {
-        String hex = PackageManagerHelper.getPackageSignatureHex(this);
-        String name = this.getPackageName();
-        profileProcessor.callAccessManagerAllowCallService(
-           "content://oem_info/oem.zebra.secure/build_serial",
-           name,
-           hex
-        );
-    }
 
-    private void getWriteExternalPermission() {
-        String hex = PackageManagerHelper.getPackageSignatureHex(this);
-        String name = this.getPackageName();
-        profileProcessor.callAccessManagerAllowPermission(
-                MXBase.EPermissionType.ALL_DANGEROUS_PERMISSIONS.toString(),
-               name,
-               this.getApplication().getClass().getName(),
-               hex
-        );
-    }
 
     // Method to set on click listener on the Set Button
     private void addSetButtonListener() {
@@ -119,26 +96,40 @@ public class MainActivity extends Activity implements MXBase.EventListener {
         });
     }
 
+    public void handleFetchSerialNumberSuccess(String result) {
+        String text = "Serial:" + result;
+        serialNumberTextView.setText(text);
+        setTitle(text);
+        Toast.makeText(MainActivity.this, text,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    public void handleFetchIMEISuccess(String result) {
+        String text = "IMEI:" + result;
+        imeiTextView.setText(text);
+        Toast.makeText(MainActivity.this, text,
+                Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onEMDKSessionOpened() {
         statusTextView.setText("EMDK open success.");
-        getWriteExternalPermission();
+        profileProcessor.fetchSerialNumberInBackground(this, new MXBase.FetchOEMInfoCallback() {
+            @Override
+            public void onSuccess(String result) {
+                MainActivity.this.handleFetchSerialNumberSuccess(result);
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
     }
 
     @Override
     public void onEMDKSessionClosed() {
 
-    }
-
-    @Override
-    public void onEMDKProcessProfileSuccess(String profileName) {
-        statusTextView.setText("EMDK process profile success: " + profileName);
-        if ("AccessManagerAllowCallService" == profileName) {
-            oemInfoHelper.getSerialNumber(this);
-
-        } else if ("AccessManagerAllowPermission" == profileName) {
-            getSerialPermission();
-        }
     }
 
     @Override
@@ -153,25 +144,10 @@ public class MainActivity extends Activity implements MXBase.EventListener {
             builder.setMessage(errorInfo.errorDescription).setPositiveButton(
                     "OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-
                         }
                     });
             AlertDialog alertDialog = builder.create();
             alertDialog.show();
         }
     }
-
-    @Override
-    public void onEMDKFetchContentProviderSuccess(String uri, String value) {
-       if (uri == "content://oem_info/oem.zebra.secure/build_serial") {
-           setTitle("Device Serial:" + value);
-           statusTextView.setText("get device serial number success:" + value);
-           if (checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_GRANTED) {
-               Toast.makeText(this, "Granted WRITE_EXTERNAL_STORAGE permission", Toast.LENGTH_LONG).show();
-               oemInfoHelper.writeDataToExternalStorage(this, "serial-number.txt", value);
-           }
-       }
-    }
-
-
 }

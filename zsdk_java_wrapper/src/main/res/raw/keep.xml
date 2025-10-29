@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@raw/profile_access_manager_allow_call_service.xml, @raw/profile_access_manager_allow_permission.xml, @raw/profile_app_manager_install_and_start.xml, @raw/profile_power_manager_reset.xml"/>

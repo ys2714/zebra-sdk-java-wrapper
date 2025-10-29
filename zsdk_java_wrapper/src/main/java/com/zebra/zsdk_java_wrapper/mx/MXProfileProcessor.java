@@ -1,23 +1,19 @@
 package com.zebra.zsdk_java_wrapper.mx;
 
-import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.util.Xml;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.symbol.emdk.EMDKManager;
 import com.symbol.emdk.EMDKResults;
 import com.symbol.emdk.ProfileManager;
 import com.symbol.emdk.EMDKManager.EMDKListener;
-import com.zebra.zsdk_java_wrapper.R;
+import com.zebra.zsdk_java_wrapper.oeminfo.OEMInfoHelper;
+import com.zebra.zsdk_java_wrapper.utils.PackageManagerHelper;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class MXProfileProcessor {
 
@@ -40,7 +36,7 @@ public class MXProfileProcessor {
         }
     }
 
-    private EMDKEventHandler eventHandler = new EMDKEventHandler();
+    private final EMDKEventHandler eventHandler = new EMDKEventHandler();
 
     //Declare a variable to store ProfileManager object
     private ProfileManager profileManager = null;
@@ -51,8 +47,6 @@ public class MXProfileProcessor {
     private MXBase.EventListener listener = null;
 
     private Context context = null;
-
-    private ProcessProfileTask currentTask = null;
 
     public MXProfileProcessor(MXBase.EventListener listener) {
         this.listener = listener;
@@ -89,197 +83,156 @@ public class MXProfileProcessor {
         }
     }
 
-    public void callAccessManagerAllowCallService(String serviceIdentifier, String callerPackageName, String callerSignature) {
+    public void fetchSerialNumberInBackground(Context ctx, MXBase.FetchOEMInfoCallback callback) {
+        fetchOEMInfoInBackground(ctx, MXConst.SERIAL_URI, callback);
+    }
+
+    public void fetchIMEIInBackground(Context ctx, MXBase.FetchOEMInfoCallback callback) {
+        fetchOEMInfoInBackground(ctx, MXConst.IMEI_URI, callback);
+    }
+
+    public void fetchOEMInfoInBackground(Context ctx, String serviceId, MXBase.FetchOEMInfoCallback callback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String serial = OEMInfoHelper.getOEMInfo(ctx, serviceId);
+                if (serial == null) {
+                    getCallServicePermission(ctx, serviceId, new MXBase.ProcessProfileCallback() {
+                        @Override
+                        public void onSuccess(String profileName) {
+                            fetchOEMInfoInBackground(ctx, serviceId, callback);
+                        }
+
+                        @Override
+                        public void onError(MXBase.ErrorInfo errorInfo) {
+                            callback.onError();
+                        }
+                    });
+                } else {
+                    new Handler(Looper.getMainLooper()).post(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onSuccess(serial);
+                            }
+                        });
+                }
+            }
+        }).start();
+    }
+
+    public void getAllDangerousPermissions(Context ctx, MXBase.ProcessProfileCallback callback) {
+        String base64 = PackageManagerHelper.getPackageSignature(ctx);
+        String name = ctx.getPackageName();
+        callAccessManagerAllowPermission(
+                MXBase.EPermissionType.ALL_DANGEROUS_PERMISSIONS.toString(),
+                name,
+                "",
+                base64,
+                new MXBase.ProcessProfileCallback() {
+                    @Override
+                    public void onSuccess(String profileName) {
+                        callback.onSuccess(profileName);
+                    }
+
+                    @Override
+                    public void onError(MXBase.ErrorInfo errorInfo) {
+                        callback.onError(errorInfo);
+                    }
+                }
+        );
+    }
+
+    public void getCallServicePermission(Context ctx, String serviceId, MXBase.ProcessProfileCallback callback) {
+        String base64 = PackageManagerHelper.getPackageSignature(ctx);
+        String name = ctx.getPackageName();
+        callAccessManagerAllowCallService(serviceId, name, base64, callback);
+    }
+
+    public void callAccessManagerAllowCallService(String serviceIdentifier, String callerPackageName, String callerSignature, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
         map.put(MXConst.serviceIdentifier, serviceIdentifier);
         map.put(MXConst.callerPackageName, callerPackageName);
         map.put(MXConst.callerSignature, callerSignature);
-        processProfile(R.raw.profile_access_manager_allow_call_service, MXConst.AccessManagerAllowCallService, map);
+        processProfile(MXConst.AccessManagerAllowCallServiceXML, MXConst.AccessManagerAllowCallService, map, callback);
     }
 
-    public void callAccessManagerAllowPermission(String permissionName, String appPackageName, String appClassName, String appSignature) {
+    public void callAccessManagerAllowPermission(String permissionName, String appPackageName, String appClassName, String appSignature, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
         map.put(MXConst.permissionAccessPermissionName, permissionName);
         map.put(MXConst.permissionAccessAction, "1"); // 1: allow
         map.put(MXConst.permissionAccessPackageName, appPackageName);
         map.put(MXConst.applicationClassName, appClassName);
         map.put(MXConst.permissionAccessSignature, appSignature);
-        processProfile(R.raw.profile_access_manager_allow_permission, MXConst.AccessManagerAllowPermission, map);
+        processProfile(MXConst.AccessManagerAllowPermissionXML, MXConst.AccessManagerAllowPermission, map, callback);
     }
 
-    public void callAppManagerInstallAndStart(String apkPath, String packageName, String mainActivity) {
+    public void callAppManagerInstallAndStart(String apkPath, String packageName, String mainActivity, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
         map.put("apkFilePath", apkPath);
         map.put("appPackageName", packageName);
         map.put("mainActivityClass", mainActivity);
-        processProfile(R.raw.profile_app_manager_install_and_start, MXConst.AppManagerInstallAndStart, map);
+        processProfile(MXConst.AppManagerInstallAndStartXML, MXConst.AppManagerInstallAndStart, map, callback);
     }
 
     public void callPowerManagerFeature(MXBase.PowerManagerOptions option) {
         callPowerManagerFeature(option, null);
     }
 
-    public void callPowerManagerFeature(MXBase.PowerManagerOptions option, String osZipFilePath) {
+    public void callPowerManagerFeature(MXBase.PowerManagerOptions option, MXBase.ProcessProfileCallback callback) {
+        callPowerManagerFeature(option, null, callback);
+    }
+
+    public void callPowerManagerFeature(MXBase.PowerManagerOptions option, String osZipFilePath, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
         switch (option) {
             case CREATE_PROFILE:
-                break;
             case DO_NOTHING:
                 break;
             case SLEEP_MODE:
-                map.put(MXConst.resetAction, option.valueString());
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
-                break;
             case REBOOT:
-                map.put(MXConst.resetAction, option.valueString());
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
-                break;
             case ENTERPRISE_RESET:
-                map.put(MXConst.resetAction, option.valueString());
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
-                break;
             case FACTORY_RESET:
-                map.put(MXConst.resetAction, option.valueString());
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
-                break;
             case FULL_DEVICE_WIPE:
                 map.put(MXConst.resetAction, option.valueString());
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                processProfile(MXConst.PowerManagerResetXML, MXConst.PowerManagerReset, map, callback);
                 break;
             case OS_UPDATE:
                 map.put(MXConst.resetAction, option.valueString());
                 map.put(MXConst.zipFile, osZipFilePath);
-                processProfile(R.raw.profile_power_manager_reset, MXConst.PowerManagerReset, map);
+                processProfile(MXConst.PowerManagerResetXML, MXConst.PowerManagerReset, map, callback);
                 break;
         }
     }
 
-    public void processProfile(int profileResId, String profileName) {
-        processProfile(profileResId, profileName, null);
+    public void processProfile(String profileResId, String profileName, MXBase.ProcessProfileCallback callback) {
+        processProfile(profileResId, profileName, null, callback);
     }
 
     // please use: com.zebra.zsdk_java_wrapper.R
-    public void processProfile(int profileResId, String profileName, Map<String, String> params) {
-        String command1 = XMLReader.readXmlFileToString(this.context, profileResId).trim();
-        if (params != null) {
-            for (String key : params.keySet()) {
-                String placeholder = "${"+key+"}" ;
-                String value = params.get(key);
-                if (value != null && command1.contains(placeholder)) {
-                   command1 = command1.replace(placeholder, value);
+    public void processProfile(String profileResId, String profileName, Map<String, String> params, MXBase.ProcessProfileCallback callback) {
+        new ProcessProfileTask(new ProcessProfileTask.Delegate() {
+            @Override
+            public EMDKResults processProfile() {
+                String command1 = XMLReader.readXmlFileToStringWithParams(MXProfileProcessor.this.context, profileResId, params);
+                return profileManager.processProfile(profileName, ProfileManager.PROFILE_FLAG.SET, new String[] {
+                    command1
+                });
+            }
+
+            @Override
+            public void processProfileSuccess() {
+                if (callback != null) {
+                    callback.onSuccess(profileName);
                 }
             }
-        }
-        if (currentTask != null && currentTask.getProfileName() == profileName) {
-            currentTask.cancel(true);
-            currentTask = null;
-        }
-        currentTask = new ProcessProfileTask(profileName);
-        currentTask.execute(command1.trim());
-    }
 
-    // Method to parse the XML response using XML Pull Parser
-    private static MXBase.ErrorInfo parseXML(XmlPullParser myParser) {
-        MXBase.ErrorInfo errorInfo = null;
-        int event;
-        try {
-            // Retrieve error details if parm-error/characteristic-error in the response XML
-            event = myParser.getEventType();
-            while (event != XmlPullParser.END_DOCUMENT) {
-                String name = myParser.getName();
-                switch (event) {
-                    case XmlPullParser.START_TAG:
-
-                        if (name.equals("parm-error")) {
-                            errorInfo = new MXBase.ErrorInfo();
-                            errorInfo.errorName = myParser.getAttributeValue(null, "name");
-                            errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
-                            return errorInfo;
-                        }
-
-                        if (name.equals("characteristic-error")) {
-                            errorInfo = new MXBase.ErrorInfo();
-                            errorInfo.errorType = myParser.getAttributeValue(null, "type");
-                            errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
-                            return errorInfo;
-                        }
-
-                        break;
-                    case XmlPullParser.END_TAG:
-
-                        break;
-                }
-                event = myParser.next();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return errorInfo;
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private class ProcessProfileTask extends AsyncTask<String, Void, EMDKResults> {
-
-        private String profileName = "";
-
-        ProcessProfileTask(String profileName) {
-            this.profileName = profileName;
-        }
-
-        public String getProfileName() {
-            return profileName;
-        }
-
-        @Override
-        protected EMDKResults doInBackground(String... params) {
-            //Call process profile to modify the profile of specified profile name
-            EMDKResults results = profileManager.processProfile(this.profileName, ProfileManager.PROFILE_FLAG.SET, params);
-            return results;
-        }
-
-        @Override
-        protected void onPostExecute(EMDKResults results) {
-
-            super.onPostExecute(results);
-
-            String resultString = "";
-
-            if (results.statusCode == EMDKResults.STATUS_CODE.SUCCESS) {
-                MXProfileProcessor.this.listener.onEMDKProcessProfileSuccess(profileName);
-                return;
-            }
-            //Check the return status of processProfile
-            if(results.statusCode == EMDKResults.STATUS_CODE.CHECK_XML) {
-
-                // Get XML response as a String
-                String statusXMLResponse = results.getStatusString();
-
-                try {
-                    // Create instance of XML Pull Parser to parse the response
-                    XmlPullParser parser = Xml.newPullParser();
-                    // Provide the string response to the String Reader that reads
-                    // for the parser
-                    parser.setInput(new StringReader(statusXMLResponse));
-                    // Call method to parse the response
-                    MXBase.ErrorInfo errorInfo = parseXML(parser);
-
-                    if (errorInfo == null) {
-                        resultString = "Profile update success.";
-                        MXProfileProcessor.this.listener.onEMDKProcessProfileSuccess(profileName);
-                    }
-                    else {
-                        MXProfileProcessor.this.listener.onEMDKError(errorInfo);
-                    }
-
-                } catch (XmlPullParserException e) {
-                    resultString =  e.getMessage();
-                    MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
-                    errorInfo.errorType = "XmlPullParserException";
-                    errorInfo.errorDescription = resultString;
-                    MXProfileProcessor.this.listener.onEMDKError(errorInfo);
+            @Override
+            public void processProfileFailure(MXBase.ErrorInfo errorInfo) {
+                if (callback != null) {
+                    callback.onError(errorInfo);
                 }
             }
-        }
+        }).execute();
     }
 }

@@ -2,7 +2,7 @@
 <wap-provisioningdoc>
     <characteristic type="Profile">
         <parm name="ProfileName" value="AccessManagerAllowCallService" />
-        <characteristic version="8.3" type="AccessMgr" >
+        <characteristic type="AccessMgr" version="9.2" >
             <parm name="OperationMode" value="1" />
             <parm name="ServiceAccessAction" value="4" />
             <parm name="ServiceIdentifier" value="${serviceIdentifier}" />

@@ -1,11 +1,23 @@
 package com.zebra.zsdk_java_wrapper.mx;
 
 public class MXConst {
+    // Content Provider Keys
+    private static final String IMEI = "imei";
+    private static final String BUILD_SERIAL = "build_serial";
+
+    public static final String SERIAL_URI = "content://oem_info/oem.zebra.secure/build_serial";
+    public static final String IMEI_URI = "content://oem_info/wan/imei";
+
+    public static String AccessManagerAllowPermissionXML = "profile_access_manager_allow_permission.xml";
+    public static String AccessManagerAllowCallServiceXML = "profile_access_manager_allow_call_service.xml";
+    public static String AppManagerInstallAndStartXML = "profile_app_manager_install_and_start.xml";
+    public static String PowerManagerResetXML = "profile_power_manager_reset.xml";
 
     public static String AccessManagerAllowPermission = "AccessManagerAllowPermission";
     public static String AccessManagerAllowCallService = "AccessManagerAllowCallService";
     public static String AppManagerInstallAndStart = "AppManagerInstallAndStart";
     public static String PowerManagerReset = "PowerManagerReset";
+
     public static String resetAction = "resetAction";
     public static String zipFile = "zipFile";
 
