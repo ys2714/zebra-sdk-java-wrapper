@@ -4,9 +4,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = "https://zebratech.jfrog.io/artifactory/EMDK-Android/"
-        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
@@ -20,9 +17,5 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = "https://zebratech.jfrog.io/artifactory/EMDK-Android/"
-        }
-
     }
 }

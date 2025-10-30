@@ -2,8 +2,10 @@ package com.zebra.zsdk_java_wrapper.mx;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,19 +15,20 @@ import java.util.Map;
 
 public class XMLReader {
 
-    public static String readXmlFileToStringWithParams(Context context, String resourceId, Map<String, String> params) {
+    private static final String TAG = XMLReader.class.getSimpleName();
 
-        String command1 = XMLReader.readXmlFileToString(context, resourceId).trim();
+    public static String readXmlFileToStringWithParams(Context context, String resourceId, Map<String, String> params) {
+        String command = readXmlFileToString(context, resourceId).trim();
         if (params != null) {
-            for (String key : params.keySet()) {
-                String placeholder = "${"+key+"}" ;
-                String value = params.get(key);
-                if (value != null && command1.contains(placeholder)) {
-                    command1 = command1.replace(placeholder, value);
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                String placeholder = String.format("${%s}", entry.getKey());
+                String value = entry.getValue();
+                if (value != null) {
+                    command = command.replace(placeholder, value);
                 }
             }
         }
-        return command1;
+        return command;
     }
 
     public static String readXmlFileToString(Context context, String resourceId) {
@@ -34,79 +37,50 @@ public class XMLReader {
 
     public static String readXmlFileToString(Context context, String resourceId, boolean newline) {
         StringBuilder stringBuilder = new StringBuilder();
-        InputStream inputStream = null;
-        BufferedReader reader = null;
+        AssetManager assetManager = context.getAssets();
 
-        try {
-            AssetManager assetManager = context.getAssets();
-            inputStream = assetManager.open(resourceId);
-            // inputStream = context.getResources().openRawResource(resourceId);
-            reader = new BufferedReader(new InputStreamReader(inputStream));
+        try (InputStream inputStream = assetManager.open(resourceId);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+
             String line;
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line.trim());
                 if (newline) {
-                    stringBuilder.append("\n"); // Add newline back if desired
+                    stringBuilder.append("\n");
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            Log.e(TAG, "Error reading XML file from assets: " + resourceId, e);
         }
         return stringBuilder.toString();
     }
 
     // Method to parse the XML response using XML Pull Parser
     public static MXBase.ErrorInfo parseXML(XmlPullParser myParser) {
-        MXBase.ErrorInfo errorInfo = null;
-        int event;
         try {
-            // Retrieve error details if parm-error/characteristic-error in the response XML
-            event = myParser.getEventType();
+            int event = myParser.getEventType();
             while (event != XmlPullParser.END_DOCUMENT) {
-                String name = myParser.getName();
-                switch (event) {
-                    case XmlPullParser.START_TAG:
+                if (event == XmlPullParser.START_TAG) {
+                    String name = myParser.getName();
+                    if ("parm-error".equals(name)) {
+                        MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
+                        errorInfo.errorName = myParser.getAttributeValue(null, "name");
+                        errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
+                        return errorInfo;
+                    }
 
-                        if (name.equals("parm-error")) {
-                            errorInfo = new MXBase.ErrorInfo();
-                            errorInfo.errorName = myParser.getAttributeValue(null, "name");
-                            errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
-                            return errorInfo;
-                        }
-
-                        if (name.equals("characteristic-error")) {
-                            errorInfo = new MXBase.ErrorInfo();
-                            errorInfo.errorType = myParser.getAttributeValue(null, "type");
-                            errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
-                            return errorInfo;
-                        }
-
-                        break;
-                    case XmlPullParser.END_TAG:
-
-                        break;
+                    if ("characteristic-error".equals(name)) {
+                        MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
+                        errorInfo.errorType = myParser.getAttributeValue(null, "type");
+                        errorInfo.errorDescription = myParser.getAttributeValue(null, "desc");
+                        return errorInfo;
+                    }
                 }
                 event = myParser.next();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (XmlPullParserException | IOException e) {
+            Log.e(TAG, "Failed to parse XML response", e);
         }
-        return errorInfo;
+        return null;
     }
 }

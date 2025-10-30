@@ -3,51 +3,43 @@ package com.zebra.zsdk_java_wrapper.oeminfo;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
 
-import com.zebra.zsdk_java_wrapper.mx.MXBase;
-import com.zebra.zsdk_java_wrapper.mx.MXConst;
-import com.zebra.zsdk_java_wrapper.utils.FileUtils;
+/**
+ * A utility class for retrieving OEM information from the device.
+ * This class should not be instantiated.
+ */
+public final class OEMInfoHelper {
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Map;
+    private static final String TAG = OEMInfoHelper.class.getSimpleName();
 
-public class OEMInfoHelper {
-
-    private static final String TAG = "OEMInfoHelper";
-
-
-
-    private MXBase.EventListener listener = null;
-
-    public OEMInfoHelper(MXBase.EventListener listener) {
-        this.listener = listener;
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private OEMInfoHelper() {
+        // This class is not meant to be instantiated.
     }
 
-    // this should run in background thread.
+    /**
+     * Retrieves OEM information, such as serial number or IMEI, from a content provider.
+     * This method should be called from a background thread to avoid blocking the UI.
+     *
+     * @param ctx       The context to use for accessing the content resolver.
+     * @param serviceId The URI of the content provider service.
+     * @return The requested OEM information as a String, or null if it cannot be retrieved.
+     */
     public static String getOEMInfo(Context ctx, String serviceId) {
-        String result = null;
-        Cursor cursor = ctx.getContentResolver().query(Uri.parse(serviceId), null, null, null, null);
-        if (cursor == null) {
-            return null;
-        } else if (cursor.getCount() < 1){
-            cursor.close();
-            return null;
-        } else {
-            cursor.moveToFirst();
-            if(cursor.getColumnCount() > 0) {
-                result = cursor.getString(0);
+        // Use try-with-resources to ensure the cursor is automatically closed.
+        try (Cursor cursor = ctx.getContentResolver().query(Uri.parse(serviceId), null, null, null, null)) {
+            // Check if the cursor is valid and contains at least one row.
+            if (cursor != null && cursor.moveToFirst() && cursor.getColumnCount() > 0) {
+                return cursor.getString(0);
             }
-            cursor.close();
-            return result;
+        } catch (Exception e) {
+            // Log any exceptions that occur during the query.
+            Log.e(TAG, "Error querying OEM info for service: " + serviceId, e);
         }
-    }
-
-    public void writeDataToExternalStorage(Context context, String filename, String data) {
-        FileUtils.saveTextToDownloads(context, filename, data);
+        // Return null if the query fails or no data is found.
+        return null;
     }
 }

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class FileUtils {
+
+    private static final String TAG = FileUtils.class.getSimpleName();
 
     /**
      * Saves a text string to a file in the public "Download" directory.
@@ -66,7 +69,7 @@ public class FileUtils {
             Toast.makeText(context, "File saved to Downloads folder", Toast.LENGTH_LONG).show();
         } catch (IOException e) {
             // Handle potential I/O errors, for example, if storage is full.
-            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
             Toast.makeText(context, "Error saving file: " + e.getMessage(), Toast.LENGTH_LONG).show();
 
             // If an error occurs, it's good practice to delete the incomplete file entry.
@@ -74,4 +77,3 @@ public class FileUtils {
         }
     }
 }
-

@@ -2,7 +2,14 @@ package com.zebra.zsdk_java_wrapper.mx;
 
 import android.text.TextUtils;
 
+import com.symbol.emdk.EMDKResults;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class MXBase {
+
+    private static final String TAG = MXBase.class.getSimpleName();
 
     public interface FetchOEMInfoCallback {
         void onSuccess(String result);
@@ -21,6 +28,7 @@ public class MXBase {
     }
 
     public static class ErrorInfo {
+        private static final String TAG = ErrorInfo.class.getSimpleName();
         // Contains the parm-error name (sub-feature that has error)
         public String errorName = "";
         // Contains the characteristic-error type (Root feature that has error)
@@ -28,30 +36,42 @@ public class MXBase {
         // contains the error description for parm or characteristic error.
         public String errorDescription = "";
 
+        public ErrorInfo(String errorType, String errorName, String errorDescription) {
+            this.errorName = errorName;
+            this.errorType = errorType;
+            this.errorDescription = errorDescription;
+        }
+
+        public ErrorInfo() {}
+
         public String buildFailureMessage() {
-            String failureMessage = "";
-            if (!TextUtils.isEmpty(errorName) && !TextUtils.isEmpty(errorType))
+            String failureMessage;
+            if (!TextUtils.isEmpty(errorName) && !TextUtils.isEmpty(errorType)) {
                 failureMessage = errorName + " :" + "\n" + errorType + " :" + "\n"
                         + errorDescription;
-            else if (!TextUtils.isEmpty(errorName))
+            } else if (!TextUtils.isEmpty(errorName)) {
                 failureMessage = errorName + " :" + "\n" + errorDescription;
-            else
+            } else {
                 failureMessage = errorType + " :" + "\n" + errorDescription;
+            }
             return failureMessage;
         }
     }
 
-    // Initial Value of the Power Manager options to be executed in the
-    // onOpened() method when the EMDK is ready. Default Value set in the wizard
-    // is 0.
-    // 0 -> Do Nothing
-    // 1 -> Sleep Mode
-    // 4 -> Reboot
-    // 5 -> Enterprise Reset
-    // 6 -> Factory Reset
-    // 7 -> Full Device Wipe
-    // 8 -> OS Update
-
+    /**
+     * Specifies the Power Manager action to be performed. The values correspond
+     * to options available in the MX Power Manager profile.
+     * <ul>
+     * <li>{@code CREATE_PROFILE} (-1): Creates the profile without taking action.</li>
+     * <li>{@code DO_NOTHING} (0): No power management action is taken.</li>
+     * <li>{@code SLEEP_MODE} (1): Puts the device into sleep mode.</li>
+     * <li>{@code REBOOT} (4): Reboots the device.</li>
+     * <li>{@code ENTERPRISE_RESET} (5): Performs an enterprise reset.</li>
+     * <li>{@code FACTORY_RESET} (6): Performs a factory reset.</li>
+     * <li>{@code FULL_DEVICE_WIPE} (7): Performs a full device wipe.</li>
+     * <li>{@code OS_UPDATE} (8): Initiates an OS update.</li>
+     * </ul>
+     */
     public enum PowerManagerOptions {
         CREATE_PROFILE(-1),
         DO_NOTHING(0),
@@ -73,25 +93,24 @@ public class MXBase {
         }
     }
 
-    public enum EPermissionType
-    {
-        ACCESS_NOTIFICATIONS(           "android.permission.ACCESS_NOTIFICATIONS"           ),
-        PACKAGE_USAGE_STATS(            "android.permission.PACKAGE_USAGE_STATS"            ),
-        SYSTEM_ALERT_WINDOW(            "android.permission.SYSTEM_ALERT_WINDOW"            ),
-        GET_APP_OPS_STATS(              "android.permission.GET_APP_OPS_STATS"              ),
-        BATTERY_STATS(                  "android.permission.BATTERY_STATS"                  ),
-        MANAGE_EXTERNAL_STORAGE(        "android.permission.MANAGE_EXTERNAL_STORAGE"        ),
-        BIND_NOTIFICATION_LISTENER(     "android.permission.BIND_NOTIFICATION_LISTENER"     ),
-        READ_LOGS(                      "android.permission.READ_LOGS"                      ),
-        ALL_DANGEROUS_PERMISSIONS(      "ALL_DANGEROUS_PERMISSIONS"                         ),
-        ACCESS_RX_LOGGER(               "com.zebra.permission.ACCESS_RXLOGGER"              ),
-        SCHEDULE_EXACT_ALARM(           "android.permission.SCHEDULE_EXACT_ALARM"           ),
-        WRITE_SETTINGS(                 "android.permission.WRITE_SETTINGS"                 ),
-        ACCESSIBILITY_SERVICE(          "ACCESSIBILITY_SERVICE_ACCESS"                      );
+    public enum EPermissionType {
+        ACCESS_NOTIFICATIONS("android.permission.ACCESS_NOTIFICATIONS"),
+        PACKAGE_USAGE_STATS("android.permission.PACKAGE_USAGE_STATS"),
+        SYSTEM_ALERT_WINDOW("android.permission.SYSTEM_ALERT_WINDOW"),
+        GET_APP_OPS_STATS("android.permission.GET_APP_OPS_STATS"),
+        BATTERY_STATS("android.permission.BATTERY_STATS"),
+        MANAGE_EXTERNAL_STORAGE("android.permission.MANAGE_EXTERNAL_STORAGE"),
+        BIND_NOTIFICATION_LISTENER("android.permission.BIND_NOTIFICATION_LISTENER"),
+        READ_LOGS("android.permission.READ_LOGS"),
+        ALL_DANGEROUS_PERMISSIONS("ALL_DANGEROUS_PERMISSIONS"),
+        ACCESS_RX_LOGGER("com.zebra.permission.ACCESS_RXLOGGER"),
+        SCHEDULE_EXACT_ALARM("android.permission.SCHEDULE_EXACT_ALARM"),
+        WRITE_SETTINGS("android.permission.WRITE_SETTINGS"),
+        ACCESSIBILITY_SERVICE("ACCESSIBILITY_SERVICE_ACCESS");
 
-        String stringContent = "";
-        EPermissionType(String stringContent)
-        {
+        private final String stringContent;
+
+        EPermissionType(String stringContent) {
             this.stringContent = stringContent;
         }
 
@@ -100,39 +119,16 @@ public class MXBase {
             return stringContent;
         }
 
-        public static EPermissionType fromString(String permissionType)
-        {
-            switch(permissionType)
-            {
-                case "android.permission.ACCESS_NOTIFICATIONS":
-                    return ACCESS_NOTIFICATIONS;
-                case "android.permission.PACKAGE_USAGE_STATS":
-                    return PACKAGE_USAGE_STATS;
-                case "android.permission.SYSTEM_ALERT_WINDOW":
-                    return SYSTEM_ALERT_WINDOW;
-                case "android.permission.GET_APP_OPS_STATS":
-                    return GET_APP_OPS_STATS;
-                case "android.permission.BATTERY_STATS":
-                    return BATTERY_STATS;
-                case "android.permission.MANAGE_EXTERNAL_STORAGE":
-                    return MANAGE_EXTERNAL_STORAGE;
-                case "android.permission.BIND_NOTIFICATION_LISTENER":
-                    return BIND_NOTIFICATION_LISTENER;
-                case "android.permission.READ_LOGS":
-                    return READ_LOGS;
-                case "ALL_DANGEROUS_PERMISSIONS":
-                    return ALL_DANGEROUS_PERMISSIONS;
-                case "com.zebra.permission.ACCESS_RXLOGGER":
-                    return ACCESS_RX_LOGGER;
-                case "android.permission.SCHEDULE_EXACT_ALARM":
-                    return SCHEDULE_EXACT_ALARM;
-                case "android.permission.WRITE_SETTINGS":
-                    return WRITE_SETTINGS;
-                case "ACCESSIBILITY_SERVICE_ACCESS":
-                    return ACCESSIBILITY_SERVICE;
-                default:
-                    return null;
+        private static final Map<String, EPermissionType> lookup = new HashMap<>();
+
+        static {
+            for (EPermissionType p : EPermissionType.values()) {
+                lookup.put(p.toString(), p);
             }
+        }
+
+        public static EPermissionType fromString(String permissionType) {
+            return lookup.get(permissionType);
         }
     }
 }

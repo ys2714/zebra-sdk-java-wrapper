@@ -2,12 +2,10 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "com.symbol.zsdkdemo"
-    compileSdkVersion 33
+    compileSdkVersion 36
     defaultConfig {
-        // applicationId "com.symbol.zsdkdemo"
         minSdkVersion 29
-        //noinspection ExpiredTargetSdkVersion
-        targetSdkVersion 33
+        targetSdkVersion 29
         versionCode 10
         versionName "11.0.0"
     }

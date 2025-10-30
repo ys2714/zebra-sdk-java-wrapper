@@ -4,13 +4,11 @@ plugins {
 
 android {
     namespace 'com.zebra.zsdk_java_wrapper'
-    compileSdk 29
+    compileSdkVersion 36
 
     defaultConfig {
         minSdk 29
-        //noinspection ExpiredTargetSdkVersion
-        targetSdk 29
-
+        targetSdkVersion 29
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -22,15 +20,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
 dependencies {
-    implementation 'com.symbol:emdk:11.0.134'
-}
-
-dependencies {
+    // download emdk 9.1.1 from:
+    // https://zebratech.jfrog.io/ui/native/EMDK-Android/com/symbol/emdk
     implementation fileTree(dir: "libs", include: ["*.jar"])
 }

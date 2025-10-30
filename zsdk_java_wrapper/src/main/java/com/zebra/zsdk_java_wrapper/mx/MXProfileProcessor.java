@@ -1,14 +1,14 @@
 package com.zebra.zsdk_java_wrapper.mx;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.symbol.emdk.EMDKManager;
+import com.symbol.emdk.EMDKManager.EMDKListener;
 import com.symbol.emdk.EMDKResults;
 import com.symbol.emdk.ProfileManager;
-import com.symbol.emdk.EMDKManager.EMDKListener;
 import com.zebra.zsdk_java_wrapper.oeminfo.OEMInfoHelper;
 import com.zebra.zsdk_java_wrapper.utils.PackageManagerHelper;
 
@@ -17,35 +17,13 @@ import java.util.Map;
 
 public class MXProfileProcessor {
 
-    private class EMDKEventHandler implements EMDKListener {
-
-        @Override
-        public void onOpened(EMDKManager emdkManager) {
-            MXProfileProcessor.this.emdkManager = emdkManager;
-            MXProfileProcessor.this.profileManager = (ProfileManager) emdkManager.getInstance(EMDKManager.FEATURE_TYPE.PROFILE);
-            MXProfileProcessor.this.listener.onEMDKSessionOpened();
-        }
-
-        @Override
-        public void onClosed() {
-            if (MXProfileProcessor.this.emdkManager != null) {
-                MXProfileProcessor.this.emdkManager.release();
-                MXProfileProcessor.this.emdkManager = null;
-            }
-            MXProfileProcessor.this.listener.onEMDKSessionClosed();
-        }
-    }
+    private static final String TAG = MXProfileProcessor.class.getSimpleName();
 
     private final EMDKEventHandler eventHandler = new EMDKEventHandler();
+    private final MXBase.EventListener listener;
 
-    //Declare a variable to store ProfileManager object
     private ProfileManager profileManager = null;
-
-    //Declare a variable to store EMDKManager object
     private EMDKManager emdkManager = null;
-
-    private MXBase.EventListener listener = null;
-
     private Context context = null;
 
     public MXProfileProcessor(MXBase.EventListener listener) {
@@ -54,29 +32,22 @@ public class MXProfileProcessor {
 
     public void connectEMDK(Context ctx) {
         this.context = ctx;
-
-        //The EMDKManager object will be created and returned in the callback.
         EMDKResults results = EMDKManager.getEMDKManager(ctx.getApplicationContext(), this.eventHandler);
-
-        //Check the return status of EMDKManager object creation.
-        if (results.statusCode == EMDKResults.STATUS_CODE.SUCCESS) {
-            //EMDKManager object creation success
-            //Status: EMDK object creation success
-        }else {
-            //EMDKManager object creation failed
-            //Status: EMDK object creation failed
+        if (results.statusCode != EMDKResults.STATUS_CODE.SUCCESS) {
+            Log.e(TAG, "EMDKManager object creation failed.");
             MXBase.ErrorInfo errorInfo = new MXBase.ErrorInfo();
             errorInfo.errorType = "EMDKManager";
             errorInfo.errorDescription = "EMDKManager object creation failed";
             this.listener.onEMDKError(errorInfo);
+        } else {
+            Log.d(TAG, "EMDKManager object creation success.");
         }
     }
 
     public void disconnectEMDK() {
-        //Clean up the objects created by EMDK manager
-        if (profileManager != null)
+        if (profileManager != null) {
             profileManager = null;
-
+        }
         if (emdkManager != null) {
             emdkManager.release();
             emdkManager = null;
@@ -92,31 +63,22 @@ public class MXProfileProcessor {
     }
 
     public void fetchOEMInfoInBackground(Context ctx, String serviceId, MXBase.FetchOEMInfoCallback callback) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String serial = OEMInfoHelper.getOEMInfo(ctx, serviceId);
-                if (serial == null) {
-                    getCallServicePermission(ctx, serviceId, new MXBase.ProcessProfileCallback() {
-                        @Override
-                        public void onSuccess(String profileName) {
-                            fetchOEMInfoInBackground(ctx, serviceId, callback);
-                        }
+        new Thread(() -> {
+            String serial = OEMInfoHelper.getOEMInfo(ctx, serviceId);
+            if (serial == null) {
+                getCallServicePermission(ctx, serviceId, new MXBase.ProcessProfileCallback() {
+                    @Override
+                    public void onSuccess(String profileName) {
+                        fetchOEMInfoInBackground(ctx, serviceId, callback);
+                    }
 
-                        @Override
-                        public void onError(MXBase.ErrorInfo errorInfo) {
-                            callback.onError();
-                        }
-                    });
-                } else {
-                    new Handler(Looper.getMainLooper()).post(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onSuccess(serial);
-                            }
-                        });
-                }
+                    @Override
+                    public void onError(MXBase.ErrorInfo errorInfo) {
+                        callback.onError();
+                    }
+                });
+            } else {
+                new Handler(Looper.getMainLooper()).post(() -> callback.onSuccess(serial));
             }
         }).start();
     }
@@ -129,17 +91,7 @@ public class MXProfileProcessor {
                 name,
                 "",
                 base64,
-                new MXBase.ProcessProfileCallback() {
-                    @Override
-                    public void onSuccess(String profileName) {
-                        callback.onSuccess(profileName);
-                    }
-
-                    @Override
-                    public void onError(MXBase.ErrorInfo errorInfo) {
-                        callback.onError(errorInfo);
-                    }
-                }
+                callback
         );
     }
 
@@ -169,9 +121,9 @@ public class MXProfileProcessor {
 
     public void callAppManagerInstallAndStart(String apkPath, String packageName, String mainActivity, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
-        map.put("apkFilePath", apkPath);
-        map.put("appPackageName", packageName);
-        map.put("mainActivityClass", mainActivity);
+        map.put(MXConst.apkFilePath, apkPath);
+        map.put(MXConst.appPackageName, packageName);
+        map.put(MXConst.mainActivityClass, mainActivity);
         processProfile(MXConst.AppManagerInstallAndStartXML, MXConst.AppManagerInstallAndStart, map, callback);
     }
 
@@ -186,9 +138,6 @@ public class MXProfileProcessor {
     public void callPowerManagerFeature(MXBase.PowerManagerOptions option, String osZipFilePath, MXBase.ProcessProfileCallback callback) {
         Map<String, String> map = new HashMap<>();
         switch (option) {
-            case CREATE_PROFILE:
-            case DO_NOTHING:
-                break;
             case SLEEP_MODE:
             case REBOOT:
             case ENTERPRISE_RESET:
@@ -202,6 +151,9 @@ public class MXProfileProcessor {
                 map.put(MXConst.zipFile, osZipFilePath);
                 processProfile(MXConst.PowerManagerResetXML, MXConst.PowerManagerReset, map, callback);
                 break;
+        case CREATE_PROFILE:
+        case DO_NOTHING:
+            break;
         }
     }
 
@@ -209,15 +161,16 @@ public class MXProfileProcessor {
         processProfile(profileResId, profileName, null, callback);
     }
 
-    // please use: com.zebra.zsdk_java_wrapper.R
     public void processProfile(String profileResId, String profileName, Map<String, String> params, MXBase.ProcessProfileCallback callback) {
         new ProcessProfileTask(new ProcessProfileTask.Delegate() {
             @Override
             public EMDKResults processProfile() {
-                String command1 = XMLReader.readXmlFileToStringWithParams(MXProfileProcessor.this.context, profileResId, params);
-                return profileManager.processProfile(profileName, ProfileManager.PROFILE_FLAG.SET, new String[] {
-                    command1
-                });
+                if (profileManager == null) {
+                    Log.e(TAG, "EMDK ProfileManager is not available.");
+                    throw new RuntimeException("EMDK ProfileManager is not available.");
+                }
+                String command = XMLReader.readXmlFileToStringWithParams(context, profileResId, params);
+                return profileManager.processProfile(profileName, ProfileManager.PROFILE_FLAG.SET, new String[]{command});
             }
 
             @Override
@@ -234,5 +187,23 @@ public class MXProfileProcessor {
                 }
             }
         }).execute();
+    }
+
+    private class EMDKEventHandler implements EMDKListener {
+        @Override
+        public void onOpened(EMDKManager emdkManager) {
+            MXProfileProcessor.this.emdkManager = emdkManager;
+            profileManager = (ProfileManager) emdkManager.getInstance(EMDKManager.FEATURE_TYPE.PROFILE);
+            listener.onEMDKSessionOpened();
+        }
+
+        @Override
+        public void onClosed() {
+            if (emdkManager != null) {
+                emdkManager.release();
+                emdkManager = null;
+            }
+            listener.onEMDKSessionClosed();
+        }
     }
 }
