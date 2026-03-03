@@ -2,11 +2,12 @@ package com.zebra.zsdk_java_wrapper.mx;
 
 import android.text.TextUtils;
 
-import com.symbol.emdk.EMDKResults;
+import androidx.annotation.Keep;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Keep
 public class MXBase {
 
     private static final String TAG = MXBase.class.getSimpleName();
@@ -80,7 +81,14 @@ public class MXBase {
         ENTERPRISE_RESET(5),
         FACTORY_RESET(6),
         FULL_DEVICE_WIPE(7),
-        OS_UPDATE(8);
+        OS_UPDATE(8),
+        OS_UPDATE_VERIFY(9),
+        OS_UPGRADE(10),
+        OS_DOWNGRADE(11),
+        OS_UPGRADE_STREAMING(12),
+        OS_DOWNGRADE_STREAMING(13),
+        OS_CANCEL_ONGOING(14),
+        POWER_OFF(15);
 
         final int value;
 
@@ -129,6 +137,127 @@ public class MXBase {
 
         public static EPermissionType fromString(String permissionType) {
             return lookup.get(permissionType);
+        }
+    }
+
+    public enum ProfileXML {
+        None("None"),
+        AccessManagerAllowPermission("profile_access_manager_allow_permission.xml"),
+        AccessManagerAllowCallService("profile_access_manager_allow_call_service.xml"),
+        AppManagerInstallAndStart("profile_app_manager_install_and_start.xml"),
+        PowerManagerReset("profile_power_manager_reset.xml"),
+        PowerManagerResetOSUpdate("profile_power_manager_reset_os_update.xml"),
+        PowerManagerResetOSVerify("profile_power_manager_reset_os_verify.xml"),
+        PowerManagerResetOSStreaming("profile_power_manager_reset_os_streaming.xml"),
+        PowerManagerRecoveryModeAccess("profile_power_manager_recovery_mode_access.xml"),
+        ClockSet("profile_clock_set.xml"),
+        ClockResetAuto("profile_clock_reset_auto.xml"),
+        DevAdminManagerDisableLockScreen("profile_dev_admin_manager_disable_lock_screen.xml"),
+        DisplayManagerDisableScreenShot("profile_display_manager_disable_screenshot.xml"),
+        PowerKeyManagerSetPowerOffState("profile_powerkey_manager_set_poweroff_state.xml"),
+        KeymappingManagerSetKeySendIntent("profile_keymapping_manager_set_key_send_intent.xml"),
+        KeymappingManagerSetAllToDefault("profile_keymapping_manager_set_all_to_default.xml"),
+        DataWedgeManagerImportProfile("profile_datawedge_manager_import_profile.xml"),
+        UsbClientModeDefault("profile_usb_manager_client_mode_default.xml"),
+        TouchPanelSensitivity("profile_touch_panel_sensitivity.xml"),
+        FileManagerCopyEmbeddedFreeFormOCR("profile_file_manager_copy_embedded_free_form_ocr.xml");
+
+        private final String value;
+
+        ProfileXML(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Deprecated
+        @Override
+        public String toString() {
+            return value;
+        }
+
+        public String getString() {
+            return value;
+        }
+    }
+
+    public enum ProfileName {
+        AccessManagerAllowPermission("AccessManagerAllowPermission"),
+        AccessManagerAllowCallService("AccessManagerAllowCallService"),
+        AppManagerInstallAndStart("AppManagerInstallAndStart"),
+        PowerManagerReset("PowerManagerReset"),
+        PowerManagerResetOSUpdate("PowerManagerResetOSUpdate"),
+        PowerManagerResetOSVerify("PowerManagerResetOSVerify"),
+        PowerManagerResetOSStreaming("PowerManagerResetOSStreaming"),
+        PowerManagerRecoveryModeAccess("PowerManagerRecoveryModeAccess"),
+        ClockSet("ClockSet"),
+        ClockResetAuto("ClockResetAuto"),
+        DevAdminManagerDisableLockScreen("DevAdminManagerDisableLockScreen"),
+        DisplayManagerDisableScreenShot("DisplayManagerDisableScreenShot"),
+        PowerKeyManagerSetPowerOffState("PowerKeyManagerSetPowerOffState"),
+        KeymappingManagerSetKeySendIntent("KeymappingManagerSetKeySendIntent"),
+        KeymappingManagerSetAllToDefault("KeymappingManagerSetAllToDefault"),
+        DataWedgeManagerImportProfile("DataWedgeManagerImportProfile"),
+        UsbClientModeDefault("UsbClientModeDefault"),
+        TouchPanelSensitivity("TouchPanelSensitivity"),
+        FileManagerCopyEmbeddedFreeFormOCR("FileManagerCopyEmbeddedFreeFormOCR");
+
+        private final String value;
+
+        ProfileName(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        @Deprecated
+        @Override
+        public String toString() {
+            return value;
+        }
+
+        public String getString() {
+            return value;
+        }
+    }
+
+    public enum PowerManagerSuppressRebootOptions {
+
+        DO_NOTHING(0),
+        TRUE(1),
+        FALSE(2);
+
+        private final int value;
+
+        PowerManagerSuppressRebootOptions(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return this.value;
+        }
+
+        /**
+         * This method is deprecated and should not be used.
+         * Calling it will result in a RuntimeException.
+         * Use getString() instead.
+         */
+        @Deprecated
+        @Override
+        public String toString() {
+            throw new RuntimeException("Not Implemented. Please use getString() instead.");
+        }
+
+        /**
+         * Returns the string representation of the enum's integer value.
+         * @return The integer value as a String.
+         */
+        public String getString() {
+            return String.valueOf(this.value);
         }
     }
 }

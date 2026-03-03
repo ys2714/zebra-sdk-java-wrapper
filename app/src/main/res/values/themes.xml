@@ -1,3 +1,3 @@
 <resources>
-
+    <style name="Theme.ZebraJavaDemo" parent="android:Theme" />
 </resources>

@@ -29,4 +29,5 @@ dependencies {
     // download emdk 9.1.1 from:
     // https://zebratech.jfrog.io/ui/native/EMDK-Android/com/symbol/emdk
     implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation("androidx.annotation:annotation:1.9.1") // Use the latest version
 }
