@@ -1,8 +1,10 @@
 package com.zebra.zsdk_java_wrapper.mx;
 
+import android.icu.text.SelectFormat;
 import android.text.TextUtils;
 
 import androidx.annotation.Keep;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,15 +14,15 @@ public class MXBase {
 
     private static final String TAG = MXBase.class.getSimpleName();
 
-    public interface FetchOEMInfoCallback {
-        void onSuccess(String result);
-        void onError();
-    }
-
-    public interface ProcessProfileCallback {
-        void onSuccess(String profileName);
-        void onError(ErrorInfo errorInfo);
-    }
+//    public interface FetchOEMInfoCallback {
+//        void onSuccess(String result);
+//        void onError();
+//    }
+//
+//    public interface ProcessProfileCallback {
+//        void onSuccess(String profileName);
+//        void onError(ErrorInfo errorInfo);
+//    }
 
     public interface EventListener {
         void onEMDKSessionOpened();
@@ -28,7 +30,7 @@ public class MXBase {
         void onEMDKError(ErrorInfo errorInfo);
     }
 
-    public static class ErrorInfo {
+    public static class ErrorInfo extends Throwable {
         private static final String TAG = ErrorInfo.class.getSimpleName();
         // Contains the parm-error name (sub-feature that has error)
         public String errorName = "";
@@ -40,6 +42,12 @@ public class MXBase {
         public ErrorInfo(String errorType, String errorName, String errorDescription) {
             this.errorName = errorName;
             this.errorType = errorType;
+            this.errorDescription = errorDescription;
+        }
+
+        public ErrorInfo(String errorDescription) {
+            this.errorName = "default error name";
+            this.errorType = "default error type";
             this.errorDescription = errorDescription;
         }
 
@@ -258,6 +266,114 @@ public class MXBase {
          */
         public String getString() {
             return String.valueOf(this.value);
+        }
+    }
+
+    public enum PersistTouchMode {
+        STYLUS_AND_FINGER("stylus_and_finger"),
+        GLOVE_AND_FINGER("glove_and_finger"),
+        FINGER_ONLY("finger"),
+        STYLUS_GLOVE_AND_FINGER("stylus_and_glove_and_finger");
+
+        private final String value;
+
+        PersistTouchMode(String value) {
+            this.value = value;
+        }
+
+        public static PersistTouchMode fromValue(String value) {
+            if (STYLUS_AND_FINGER.value.equals(value)) {
+                return STYLUS_AND_FINGER;
+            }
+            else if (GLOVE_AND_FINGER.value.equals(value)) {
+                return GLOVE_AND_FINGER;
+            }
+            else if (FINGER_ONLY.value.equals(value)) {
+                return FINGER_ONLY;
+            }
+            else if (STYLUS_GLOVE_AND_FINGER.value.equals(value)) {
+                return STYLUS_GLOVE_AND_FINGER;
+            }
+            else {
+                throw new RuntimeException("PersistTouchMode invalid value: " + value);
+            }
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+
+        public TouchPanelSensitivityOptions convert() {
+            switch (this) {
+                case STYLUS_AND_FINGER:
+                    return TouchPanelSensitivityOptions.STYLUS_AND_FINGER;
+                case GLOVE_AND_FINGER:
+                    return TouchPanelSensitivityOptions.GLOVE_AND_FINGER;
+                case FINGER_ONLY:
+                    return TouchPanelSensitivityOptions.FINGER_ONLY;
+                case STYLUS_GLOVE_AND_FINGER:
+                    return TouchPanelSensitivityOptions.STYLUS_GLOVE_AND_FINGER;
+            }
+            throw new RuntimeException("PersistTouchMode covert failed: " + this.value);
+        }
+    }
+
+    public enum TouchPanelSensitivityOptions {
+
+        DO_NOTHING(0, "Do not change"),
+        STYLUS_AND_FINGER(1, "Stylus and Finger"),
+        GLOVE_AND_FINGER(2, "Glove and Finger"),
+        FINGER_ONLY(3, "Finger"),
+        STYLUS_GLOVE_AND_FINGER(4, "Stylus and Glove and Finger");
+
+        private final int value;
+        private final String xmlValue;
+
+        /**
+         * Constructor for the enum constants.
+         * @param value The integer representation of the option.
+         * @param xmlValue The string value used for XML configuration.
+         */
+        TouchPanelSensitivityOptions(int value, String xmlValue) {
+            this.value = value;
+            this.xmlValue = xmlValue;
+        }
+
+        /**
+         * Gets the integer representation of the option.
+         * @return The integer value.
+         */
+        public int getValue() {
+            return this.value;
+        }
+
+        /**
+         * Gets the string value used for XML configuration.
+         * @return The XML value string.
+         */
+        public String getXmlValue() {
+            return this.xmlValue;
+        }
+
+        /**
+         * Gets the integer value of the option as a String.
+         * This is the equivalent of the Kotlin 'string' property.
+         * @return The integer value converted to a String.
+         */
+        public String getString() {
+            return String.valueOf(this.value);
+        }
+
+        /**
+         * This method is intentionally broken to match the Kotlin implementation.
+         * Developers should use getString() or getXmlValue() instead.
+         *
+         * @deprecated please use .getString() instead. This method will be removed in a future version.
+         */
+        @Override
+        @Deprecated
+        public String toString() {
+            throw new RuntimeException("Not Implemented. Please use getString() or getXmlValue().");
         }
     }
 }

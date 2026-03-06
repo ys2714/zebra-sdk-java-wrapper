@@ -46,7 +46,7 @@ class ProcessProfileTask extends AsyncTask<Void, Void, EMDKResults> {
             try {
                 XmlPullParser parser = Xml.newPullParser();
                 parser.setInput(new StringReader(statusXMLResponse));
-                MXBase.ErrorInfo errorInfo = XMLReader.parseXML(parser);
+                MXBase.ErrorInfo errorInfo = XMLParser.parseXML(parser);
 
                 if (errorInfo == null) {
                     // This can happen if the XML does not contain an error, but the status was not SUCCESS.

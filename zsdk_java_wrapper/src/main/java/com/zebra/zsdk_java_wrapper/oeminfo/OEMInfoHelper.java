@@ -1,9 +1,14 @@
 package com.zebra.zsdk_java_wrapper.oeminfo;
 
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+
+import java.util.function.Consumer;
 
 /**
  * A utility class for retrieving OEM information from the device.
@@ -13,6 +18,8 @@ public final class OEMInfoHelper {
 
     private static final String TAG = OEMInfoHelper.class.getSimpleName();
 
+
+    
     /**
      * Private constructor to prevent instantiation of this utility class.
      */
@@ -41,5 +48,17 @@ public final class OEMInfoHelper {
         }
         // Return null if the query fails or no data is found.
         return null;
+    }
+
+    public static void startObserveOEMInfoChange(Context ctx, String serviceId, ContentObserver observer) {
+        ctx.getApplicationContext()
+                .getContentResolver()
+                .registerContentObserver(Uri.parse(serviceId), false, observer);
+    }
+
+    public static void stopObserveOEMInfoChange(Context ctx, ContentObserver observer) {
+        ctx.getApplicationContext()
+                .getContentResolver()
+                .unregisterContentObserver(observer);
     }
 }

@@ -27,7 +27,7 @@
         android:layout_below="@+id/textViewStatus"
         android:layout_alignStart="@+id/textViewStatus"
         android:layout_alignEnd="@+id/textViewStatus"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="6dp"
         android:text="SerialNumber:"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,44 +40,89 @@
         android:layout_below="@+id/textViewSerialNumber"
         android:layout_alignStart="@+id/textViewStatus"
         android:layout_alignEnd="@+id/textViewStatus"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="6dp"
         android:text="IMEI:"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewSerialNumber" />
 
-    <Button
-        android:id="@+id/fetchButton1"
-        android:layout_width="300dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="30dp"
-        android:text="Fetch SN IMEI"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewIMEI" />
-
     <TextView
-        android:id="@+id/textTouchMode"
+        android:id="@+id/persistTouchMode"
         android:layout_width="300dp"
         android:layout_height="30dp"
         android:layout_below="@+id/textViewSerialNumber"
         android:layout_alignStart="@+id/textViewStatus"
         android:layout_alignEnd="@+id/textViewStatus"
-        android:layout_marginTop="20dp"
-        android:text="Touch Mode:"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fetchButton1" />
-
-    <Button
-        android:id="@+id/fetchButton2"
-        android:layout_width="300dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="30dp"
-        android:text="Fetch Touch Mode"
+        android:layout_marginTop="60dp"
+        android:text="Persist Touch Mode:"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textTouchMode" />
+        app:layout_constraintTop_toBottomOf="@+id/textViewIMEI" />
+
+    <Button
+        android:id="@+id/fetchTouchModeButton"
+        android:layout_width="300dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="6dp"
+        android:text="Fetch PERSIST Touch Mode"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textCurrentTouchMode" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fetchTouchModeButton">
+
+        <RadioButton
+            android:id="@+id/radioButton1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Finger" />
+
+        <RadioButton
+            android:id="@+id/radioButton2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Glove and Finger" />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/setTouchModeButton"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="SET TOUCH MODE"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup" />
+
+    <TextView
+        android:id="@+id/textCurrentTouchMode"
+        android:layout_width="300dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="6dp"
+        android:text="Current Touch Mode:"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/persistTouchMode" />
+
+    <EditText
+        android:id="@+id/editTextTextMultiLine"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ems="10"
+        android:gravity="start|top"
+        android:inputType="textMultiLine"
+        android:text="the persist touch mode only update after BOOT_COMPLETE"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/setTouchModeButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

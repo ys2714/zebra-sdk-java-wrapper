@@ -4,13 +4,16 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.symbol.zsdkdemo.databinding.ActivityOeminfoBinding;
 import com.zebra.zsdk_java_wrapper.mx.MXBase;
 import com.zebra.zsdk_java_wrapper.mx.MXProfileProcessor;
+import com.zebra.zsdk_java_wrapper.utils.DeviceBootTimeHelper;
 
 public class OEMInfoActivity extends AppCompatActivity {
 
@@ -18,6 +21,8 @@ public class OEMInfoActivity extends AppCompatActivity {
 
     private ActivityOeminfoBinding binding;
     private MXProfileProcessor profileProcessor;
+
+    private MXBase.TouchPanelSensitivityOptions currentTouchPanelSensitivity = MXBase.TouchPanelSensitivityOptions.DO_NOTHING;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,74 +47,84 @@ public class OEMInfoActivity extends AppCompatActivity {
         }
     }
 
+    private void fetchTouchMode(Context context) {
+        profileProcessor.fetchTouchModeInBackground(context, (result, errorInfo) -> {
+            if (result != null && errorInfo == null) {
+                MXBase.TouchPanelSensitivityOptions option = MXBase.PersistTouchMode.fromValue(result).convert();
+                binding.persistTouchMode.setText("Persist Touch Mode: " + option.getXmlValue());
+            } else {
+                binding.persistTouchMode.setText("Error to fetch Persist Touch Mode");
+            }
+        });
+    }
+
+    private void fetchSerialNumber(Context context, Runnable completion) {
+        profileProcessor.fetchSerialNumberInBackground(context, (result, errorInfo) -> {
+            if (result != null && errorInfo == null) {
+                runOnUiThread(() -> {
+                    handleFetchSerialNumberSuccess(result);
+                    completion.run();
+                });
+            } else {
+                Log.d(TAG, "Failed to fetch serial number");
+                runOnUiThread(() -> {
+                    Toast.makeText(context, "Failed to fetch Serial Number", Toast.LENGTH_SHORT).show();
+                    completion.run();
+                });
+            }
+        });
+    }
+
+    private void fetchIMEI(Context context, Runnable completion) {
+        profileProcessor.fetchIMEIInBackground(context, (result, errorInfo) -> {
+            if (result != null && errorInfo == null) {
+                runOnUiThread(() -> {
+                    handleFetchIMEISuccess(result);
+                    completion.run();
+                });
+            } else {
+                Log.d(TAG, "Failed to fetch IMEI");
+                runOnUiThread(() -> {
+                    Toast.makeText(OEMInfoActivity.this, "Failed to fetch IMEI", Toast.LENGTH_SHORT).show();
+                    completion.run();
+                });
+            }
+        });
+    }
+
     private void setupViews(Context context) {
         binding.textViewStatus.setText("");
         binding.textViewSerialNumber.setText("");
         binding.textViewIMEI.setText("");
-        binding.fetchButton1.setOnClickListener(new View.OnClickListener() {
+
+        binding.fetchTouchModeButton.setOnClickListener(v -> fetchTouchMode(context));
+
+        binding.radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-                // Fetch SN
-                profileProcessor.fetchSerialNumberInBackground(context, new MXBase.FetchOEMInfoCallback() {
-                    @Override
-                    public void onSuccess(String result) {
-                        binding.textViewSerialNumber.setText(result);
-                        // Fetch IMEI
-                        profileProcessor.fetchIMEIInBackground(context, new MXBase.FetchOEMInfoCallback() {
-
-                            @Override
-                            public void onSuccess(String result) {
-                                binding.textViewIMEI.setText(result);
-                            }
-
-                            @Override
-                            public void onError() {
-                                binding.textViewIMEI.setText("Error to fetch IMEI");
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onError() {
-                        binding.textViewSerialNumber.setText("Error to fetch SN");
-                    }
-                });
+            public void onCheckedChanged(@NonNull RadioGroup group, int checkedId) {
+                if (checkedId == R.id.radioButton1) {
+                    currentTouchPanelSensitivity = MXBase.TouchPanelSensitivityOptions.FINGER_ONLY;
+                }
+                else if (checkedId == R.id.radioButton2) {
+                    currentTouchPanelSensitivity = MXBase.TouchPanelSensitivityOptions.GLOVE_AND_FINGER;
+                }
             }
         });
 
-        binding.fetchButton2.setOnClickListener(new View.OnClickListener() {
+        binding.setTouchModeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // first try
-                profileProcessor.fetchTouchModeInBackground(context, new MXBase.FetchOEMInfoCallback() {
-
-                    @Override
-                    public void onSuccess(String result) {
-                        if (!result.isEmpty()) {
-                            binding.textTouchMode.setText(result);
-                        } else {
-                            // second try
-                            profileProcessor.fetchVendorTouchModeInBackground(context, new MXBase.FetchOEMInfoCallback() {
-
-                                @Override
-                                public void onSuccess(String result) {
-                                    binding.textTouchMode.setText(result);
-                                }
-
-                                @Override
-                                public void onError() {
-                                    binding.textTouchMode.setText("Error to fetch Touch Mode");
-                                }
-                            });
-
-                        }
-                    }
-
-                    @Override
-                    public void onError() {
-                        binding.textTouchMode.setText("Error to fetch Touch Mode");
-                    }
-                });
+                binding.textCurrentTouchMode.setText("Current Touch Mode: " + currentTouchPanelSensitivity.getXmlValue());
+                profileProcessor.configTouchPanelSensitivity(
+                        context,
+                        currentTouchPanelSensitivity,
+                        (errorInfo) -> {
+                            if (errorInfo != null) {
+                                Toast.makeText(context, errorInfo.errorDescription, Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(context, "Set Touch Mode Success", Toast.LENGTH_LONG).show();
+                            }
+                        });
             }
         });
     }
@@ -119,31 +134,31 @@ public class OEMInfoActivity extends AppCompatActivity {
         public void onEMDKSessionOpened() {
             binding.textViewStatus.setText("EMDK open success.");
 
-//            profileProcessor.fetchSerialNumberInBackground(OEMInfoActivity.this, new MXBase.FetchOEMInfoCallback() {
-//                @Override
-//                public void onSuccess(String result) {
-//                    runOnUiThread(() -> handleFetchSerialNumberSuccess(result));
-//
-//                    profileProcessor.fetchIMEIInBackground(OEMInfoActivity.this, new MXBase.FetchOEMInfoCallback() {
-//                        @Override
-//                        public void onSuccess(String result) {
-//                            runOnUiThread(() -> handleFetchIMEISuccess(result));
-//                        }
-//
-//                        @Override
-//                        public void onError() {
-//                            Log.d(TAG, "Failed to fetch IMEI");
-//                            runOnUiThread(() -> Toast.makeText(OEMInfoActivity.this, "Failed to fetch IMEI", Toast.LENGTH_SHORT).show());
-//                        }
-//                    });
-//                }
-//
-//                @Override
-//                public void onError() {
-//                    Log.d(TAG, "Failed to fetch serial number");
-//                    runOnUiThread(() -> Toast.makeText(OEMInfoActivity.this, "Failed to fetch Serial Number", Toast.LENGTH_SHORT).show());
-//                }
-//            });
+            if (DeviceBootTimeHelper.shared().isOEMInfoUpdated()) {
+                fetchTouchMode(OEMInfoActivity.this) ;
+            } else {
+                binding.persistTouchMode.setText("Persist Touch Mode: waiting OEM info update complete");
+                DeviceBootTimeHelper.shared().waitOEMInfoUpdateCompletedOneShot(new Runnable() {
+                    @Override
+                    public void run() {
+                        fetchTouchMode(OEMInfoActivity.this);
+                    }
+                });
+            }
+
+            if (DeviceBootTimeHelper.shared().isBootCompleted()) {
+                fetchSerialNumber(OEMInfoActivity.this, () -> {
+                    fetchIMEI(OEMInfoActivity.this, () -> {});
+                });
+            } else {
+                DeviceBootTimeHelper.shared().waitBootCompletedOneShot(
+                        () -> {
+                            fetchSerialNumber(OEMInfoActivity.this, () -> {
+                                fetchIMEI(OEMInfoActivity.this, () -> {});
+                            });
+                        }
+                );
+            }
         }
 
         @Override
