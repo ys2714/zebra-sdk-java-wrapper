@@ -8,13 +8,13 @@ import android.widget.Toast;
 
 import com.symbol.zsdkdemo.databinding.ActivityPowerManagerBinding;
 import com.zebra.zsdk_java_wrapper.mx.MXBase;
+import com.zebra.zsdk_java_wrapper.mx.MXHelper;
 import com.zebra.zsdk_java_wrapper.mx.MXProfileProcessor;
 
 public class PowerManagerActivity extends Activity implements MXBase.EventListener {
 
     private static final String TAG = PowerManagerActivity.class.getSimpleName();
 
-    private MXProfileProcessor profileProcessor;
     private ActivityPowerManagerBinding binding;
 
     @Override
@@ -28,16 +28,11 @@ public class PowerManagerActivity extends Activity implements MXBase.EventListen
     @Override
     protected void onResume() {
         super.onResume();
-        profileProcessor = new MXProfileProcessor(this);
-        profileProcessor.connectEMDK(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (profileProcessor != null) {
-            profileProcessor.disconnectEMDK();
-        }
     }
 
     @Override
@@ -50,16 +45,16 @@ public class PowerManagerActivity extends Activity implements MXBase.EventListen
             int radioId = binding.radioGroupPwr.getCheckedRadioButtonId();
 
             if (radioId == R.id.radioSuspend) {
-                profileProcessor.callPowerManagerFeature(MXBase.PowerManagerOptions.SLEEP_MODE);
+                MXHelper.setDeviceToSleep(this);
             } else if (radioId == R.id.radioReset) {
-                profileProcessor.callPowerManagerFeature(MXBase.PowerManagerOptions.REBOOT);
+                MXHelper.setDeviceToReboot(this);
             } else if (radioId == R.id.radioOSUpdate) {
                 String path = binding.etZipFilePath.getText().toString();
-                profileProcessor.callPowerManagerFeature(
-                        MXBase.PowerManagerOptions.OS_UPDATE,
+                MXHelper.upgradeOS(
+                        this,
                         path,
-                        MXBase.PowerManagerSuppressRebootOptions.DO_NOTHING,
-                        null
+                        true,
+                        0
                 );
             }
         });

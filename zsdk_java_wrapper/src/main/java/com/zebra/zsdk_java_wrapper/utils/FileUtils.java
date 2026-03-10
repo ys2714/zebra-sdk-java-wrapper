@@ -9,10 +9,13 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.Keep;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+@Keep
 public class FileUtils {
 
     private static final String TAG = FileUtils.class.getSimpleName();

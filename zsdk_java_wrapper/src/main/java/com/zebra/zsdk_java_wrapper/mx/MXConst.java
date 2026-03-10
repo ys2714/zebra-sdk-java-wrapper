@@ -70,6 +70,8 @@ public final class MXConst {
     public static final String TargetPathAndFileName = "TargetPathAndFileName";
     public static final String ConfigurationFile = "ConfigurationFile";
     public static final String EXTRA_KEY_IDENTIFIER = "EXTRA_KEY_IDENTIFIER";
+    public static final String IntentAction = "IntentAction";
+    public static final String IntentCategory = "IntentCategory";
 
     // Ignored Value
     public static final String ignoredValue = "ignoredValue";

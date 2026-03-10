@@ -8,8 +8,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 
-import androidx.annotation.MainThread;
-
 public class DeviceBootTimeHelper {
     // Const
     private static final long OEMINFO_UPDATE_TIME_SINCE_BOOT_COMPLETED_MILLI = 30 * 1000;

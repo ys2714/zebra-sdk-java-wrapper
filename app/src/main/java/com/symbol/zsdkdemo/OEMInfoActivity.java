@@ -12,17 +12,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.symbol.zsdkdemo.databinding.ActivityOeminfoBinding;
 import com.zebra.zsdk_java_wrapper.mx.MXBase;
-import com.zebra.zsdk_java_wrapper.mx.MXProfileProcessor;
-import com.zebra.zsdk_java_wrapper.utils.DeviceBootTimeHelper;
+import com.zebra.zsdk_java_wrapper.mx.MXHelper;
 
 public class OEMInfoActivity extends AppCompatActivity {
 
     private static final String TAG = PowerManagerActivity.class.getSimpleName();
-
     private ActivityOeminfoBinding binding;
-    private MXProfileProcessor profileProcessor;
 
-    private MXBase.TouchPanelSensitivityOptions currentTouchPanelSensitivity = MXBase.TouchPanelSensitivityOptions.DO_NOTHING;
+    private MXBase.TouchPanelSensitivityOptions currentTouchPanelSensitivity
+            = MXBase.TouchPanelSensitivityOptions.DO_NOTHING;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,21 +33,19 @@ public class OEMInfoActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        profileProcessor = new MXProfileProcessor(new MXEventListener());
-        profileProcessor.connectEMDK(this);
+        fetchSerialNumber(OEMInfoActivity.this, () -> {
+            fetchIMEI(OEMInfoActivity.this, () -> {});
+        });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (profileProcessor != null) {
-            profileProcessor.disconnectEMDK();
-        }
     }
 
     private void fetchTouchMode(Context context) {
-        profileProcessor.fetchTouchModeInBackground(context, (result, errorInfo) -> {
-            if (result != null && errorInfo == null) {
+        MXHelper.fetchTouchMode(context, (result) -> {
+            if (result != null) {
                 MXBase.TouchPanelSensitivityOptions option = MXBase.PersistTouchMode.fromValue(result).convert();
                 binding.persistTouchMode.setText("Persist Touch Mode: " + option.getXmlValue());
             } else {
@@ -59,8 +55,8 @@ public class OEMInfoActivity extends AppCompatActivity {
     }
 
     private void fetchSerialNumber(Context context, Runnable completion) {
-        profileProcessor.fetchSerialNumberInBackground(context, (result, errorInfo) -> {
-            if (result != null && errorInfo == null) {
+        MXHelper.fetchSerialNumber(context, (result) -> {
+            if (result != null) {
                 runOnUiThread(() -> {
                     handleFetchSerialNumberSuccess(result);
                     completion.run();
@@ -76,8 +72,8 @@ public class OEMInfoActivity extends AppCompatActivity {
     }
 
     private void fetchIMEI(Context context, Runnable completion) {
-        profileProcessor.fetchIMEIInBackground(context, (result, errorInfo) -> {
-            if (result != null && errorInfo == null) {
+        MXHelper.fetchIMEI(context, (result) -> {
+            if (result != null) {
                 runOnUiThread(() -> {
                     handleFetchIMEISuccess(result);
                     completion.run();
@@ -115,61 +111,14 @@ public class OEMInfoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 binding.textCurrentTouchMode.setText("Current Touch Mode: " + currentTouchPanelSensitivity.getXmlValue());
-                profileProcessor.configTouchPanelSensitivity(
+                MXHelper.setTouchPanelSensitivity(
                         context,
                         currentTouchPanelSensitivity,
-                        (errorInfo) -> {
-                            if (errorInfo != null) {
-                                Toast.makeText(context, errorInfo.errorDescription, Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(context, "Set Touch Mode Success", Toast.LENGTH_LONG).show();
-                            }
+                        (success) -> {
+                            Toast.makeText(context, "Set Touch Mode Success? " + success, Toast.LENGTH_LONG).show();
                         });
             }
         });
-    }
-
-    private class MXEventListener implements MXBase.EventListener {
-        @Override
-        public void onEMDKSessionOpened() {
-            binding.textViewStatus.setText("EMDK open success.");
-
-            if (DeviceBootTimeHelper.shared().isOEMInfoUpdated()) {
-                fetchTouchMode(OEMInfoActivity.this) ;
-            } else {
-                binding.persistTouchMode.setText("Persist Touch Mode: waiting OEM info update complete");
-                DeviceBootTimeHelper.shared().waitOEMInfoUpdateCompletedOneShot(new Runnable() {
-                    @Override
-                    public void run() {
-                        fetchTouchMode(OEMInfoActivity.this);
-                    }
-                });
-            }
-
-            if (DeviceBootTimeHelper.shared().isBootCompleted()) {
-                fetchSerialNumber(OEMInfoActivity.this, () -> {
-                    fetchIMEI(OEMInfoActivity.this, () -> {});
-                });
-            } else {
-                DeviceBootTimeHelper.shared().waitBootCompletedOneShot(
-                        () -> {
-                            fetchSerialNumber(OEMInfoActivity.this, () -> {
-                                fetchIMEI(OEMInfoActivity.this, () -> {});
-                            });
-                        }
-                );
-            }
-        }
-
-        @Override
-        public void onEMDKSessionClosed() {
-
-        }
-
-        @Override
-        public void onEMDKError(MXBase.ErrorInfo errorInfo) {
-
-        }
     }
 
     public void handleFetchSerialNumberSuccess(String result) {

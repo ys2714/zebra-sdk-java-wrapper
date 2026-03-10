@@ -1,28 +1,12 @@
 package com.zebra.zsdk_java_wrapper.mx;
 
-import android.icu.text.SelectFormat;
 import android.text.TextUtils;
-
 import androidx.annotation.Keep;
-import androidx.annotation.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Keep
 public class MXBase {
 
     private static final String TAG = MXBase.class.getSimpleName();
-
-//    public interface FetchOEMInfoCallback {
-//        void onSuccess(String result);
-//        void onError();
-//    }
-//
-//    public interface ProcessProfileCallback {
-//        void onSuccess(String profileName);
-//        void onError(ErrorInfo errorInfo);
-//    }
 
     public interface EventListener {
         void onEMDKSessionOpened();
@@ -31,56 +15,39 @@ public class MXBase {
     }
 
     public static class ErrorInfo extends Throwable {
-        private static final String TAG = ErrorInfo.class.getSimpleName();
-        // Contains the parm-error name (sub-feature that has error)
         public String errorName = "";
-        // Contains the characteristic-error type (Root feature that has error)
         public String errorType = "";
-        // contains the error description for parm or characteristic error.
         public String errorDescription = "";
 
         public ErrorInfo(String errorType, String errorName, String errorDescription) {
+            super(errorDescription);
             this.errorName = errorName;
             this.errorType = errorType;
             this.errorDescription = errorDescription;
         }
 
         public ErrorInfo(String errorDescription) {
+            super(errorDescription);
             this.errorName = "default error name";
             this.errorType = "default error type";
             this.errorDescription = errorDescription;
         }
 
-        public ErrorInfo() {}
+        public ErrorInfo() {
+            super();
+        }
 
         public String buildFailureMessage() {
-            String failureMessage;
             if (!TextUtils.isEmpty(errorName) && !TextUtils.isEmpty(errorType)) {
-                failureMessage = errorName + " :" + "\n" + errorType + " :" + "\n"
-                        + errorDescription;
+                return errorName + " :" + "\n" + errorType + " :" + "\n" + errorDescription;
             } else if (!TextUtils.isEmpty(errorName)) {
-                failureMessage = errorName + " :" + "\n" + errorDescription;
+                return errorName + " :" + "\n" + errorDescription;
             } else {
-                failureMessage = errorType + " :" + "\n" + errorDescription;
+                return errorType + " :" + "\n" + errorDescription;
             }
-            return failureMessage;
         }
     }
 
-    /**
-     * Specifies the Power Manager action to be performed. The values correspond
-     * to options available in the MX Power Manager profile.
-     * <ul>
-     * <li>{@code CREATE_PROFILE} (-1): Creates the profile without taking action.</li>
-     * <li>{@code DO_NOTHING} (0): No power management action is taken.</li>
-     * <li>{@code SLEEP_MODE} (1): Puts the device into sleep mode.</li>
-     * <li>{@code REBOOT} (4): Reboots the device.</li>
-     * <li>{@code ENTERPRISE_RESET} (5): Performs an enterprise reset.</li>
-     * <li>{@code FACTORY_RESET} (6): Performs a factory reset.</li>
-     * <li>{@code FULL_DEVICE_WIPE} (7): Performs a full device wipe.</li>
-     * <li>{@code OS_UPDATE} (8): Initiates an OS update.</li>
-     * </ul>
-     */
     public enum PowerManagerOptions {
         CREATE_PROFILE(-1),
         DO_NOTHING(0),
@@ -104,7 +71,7 @@ public class MXBase {
             this.value = value;
         }
 
-        String valueString() {
+        public String getString() {
             return String.valueOf(value);
         }
     }
@@ -134,18 +101,6 @@ public class MXBase {
         public String toString() {
             return stringContent;
         }
-
-        private static final Map<String, EPermissionType> lookup = new HashMap<>();
-
-        static {
-            for (EPermissionType p : EPermissionType.values()) {
-                lookup.put(p.toString(), p);
-            }
-        }
-
-        public static EPermissionType fromString(String permissionType) {
-            return lookup.get(permissionType);
-        }
     }
 
     public enum ProfileXML {
@@ -174,16 +129,6 @@ public class MXBase {
 
         ProfileXML(String value) {
             this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        @Deprecated
-        @Override
-        public String toString() {
-            return value;
         }
 
         public String getString() {
@@ -218,23 +163,12 @@ public class MXBase {
             this.value = value;
         }
 
-        public String getValue() {
-            return value;
-        }
-
-        @Deprecated
-        @Override
-        public String toString() {
-            return value;
-        }
-
         public String getString() {
             return value;
         }
     }
 
     public enum PowerManagerSuppressRebootOptions {
-
         DO_NOTHING(0),
         TRUE(1),
         FALSE(2);
@@ -245,25 +179,6 @@ public class MXBase {
             this.value = value;
         }
 
-        public int getValue() {
-            return this.value;
-        }
-
-        /**
-         * This method is deprecated and should not be used.
-         * Calling it will result in a RuntimeException.
-         * Use getString() instead.
-         */
-        @Deprecated
-        @Override
-        public String toString() {
-            throw new RuntimeException("Not Implemented. Please use getString() instead.");
-        }
-
-        /**
-         * Returns the string representation of the enum's integer value.
-         * @return The integer value as a String.
-         */
         public String getString() {
             return String.valueOf(this.value);
         }
@@ -319,7 +234,6 @@ public class MXBase {
     }
 
     public enum TouchPanelSensitivityOptions {
-
         DO_NOTHING(0, "Do not change"),
         STYLUS_AND_FINGER(1, "Stylus and Finger"),
         GLOVE_AND_FINGER(2, "Glove and Finger"),
@@ -329,51 +243,168 @@ public class MXBase {
         private final int value;
         private final String xmlValue;
 
-        /**
-         * Constructor for the enum constants.
-         * @param value The integer representation of the option.
-         * @param xmlValue The string value used for XML configuration.
-         */
         TouchPanelSensitivityOptions(int value, String xmlValue) {
             this.value = value;
             this.xmlValue = xmlValue;
         }
 
-        /**
-         * Gets the integer representation of the option.
-         * @return The integer value.
-         */
-        public int getValue() {
-            return this.value;
-        }
-
-        /**
-         * Gets the string value used for XML configuration.
-         * @return The XML value string.
-         */
         public String getXmlValue() {
             return this.xmlValue;
         }
 
-        /**
-         * Gets the integer value of the option as a String.
-         * This is the equivalent of the Kotlin 'string' property.
-         * @return The integer value converted to a String.
-         */
         public String getString() {
             return String.valueOf(this.value);
         }
+    }
 
-        /**
-         * This method is intentionally broken to match the Kotlin implementation.
-         * Developers should use getString() or getXmlValue() instead.
-         *
-         * @deprecated please use .getString() instead. This method will be removed in a future version.
-         */
+    public enum KeyIdentifiers {
+        SCAN("SCAN"),
+        GRIP_TRIGGER("GRIP_TRIGGER"),
+        LEFT_TRIGGER_1("LEFT_TRIGGER_1"),
+        RIGHT_TRIGGER_1("RIGHT_TRIGGER_1"),
+        REAR_BUTTON("REAR_BUTTON"),
+        CENTER_TRIGGER_1("CENTER_TRIGGER_1");
+
+        private final String value;
+
+        KeyIdentifiers(String value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return value;
+        }
+    }
+
+    public enum ScreenLockType {
+        DO_NOT_CHANGE(0),
+        SWIPE(1),
+        PATTERN(2),
+        PIN(3),
+        PASSWORD(4),
+        NONE(5);
+
+        private final int value;
+
+        ScreenLockType(int value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return String.valueOf(value);
+        }
+    }
+
+    public enum ScreenShotUsage {
+        DO_NOTHING(0),
+        ENABLE(1),
+        DISABLE(2);
+
+        private final int value;
+
+        ScreenShotUsage(int value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return String.valueOf(value);
+        }
+    }
+
+    /**
+     * https://techdocs.zebra.com/mx/keymappingmgr/#key-code
+     *
+     * */
+    public enum KeyCodes {
+        VOLUMEUP(24),
+        VOLUMEDOWN(25),
+        SCAN(10036),
+        LEFT_TRIGGER_1(102),
+        RIGHT_TRIGGER_1(103),
+        LEFT_TRIGGER_2(104),
+        RIGHT_TRIGGER_2(105),
+        HEADSET_HOOK(79),
+        BACK(4),
+        HOME(3),
+        MENU(82),
+        POWER(26),
+        DO_NOT_DISTURB(10043), //WS50
+        CHANNEL_SWITCH(10044), //FR55
+        DURESS(10045); //emergency call button
+
+        private final int value;
+
+        KeyCodes(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
         @Override
-        @Deprecated
         public String toString() {
-            throw new RuntimeException("Not Implemented. Please use getString() or getXmlValue().");
+            return String.valueOf(value);
+        }
+
+        public String getString() {
+            return String.valueOf(value);
+        }
+    }
+    
+    public enum OSUpdateStatus {
+        PASSED, FAILED, CANCELLED, IN_PROGRESS, IN_SUSPEND, WAITING_FOR_REBOOT
+    }
+
+    public interface OSUpdateStatusCallback {
+        void onResult(OSUpdateStatus status, String detail, String timestamp);
+    }
+
+    public enum ShowHideState {
+        DO_NOT_CHANGE(0), SHOW(1), HIDE(2);
+
+        private final int value;
+
+        ShowHideState(int value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return String.valueOf(value);
+        }
+    }
+
+    public enum PowerManagerRecoveryModeAccessOptions {
+        ENABLE(1),
+        DISABLE(2);
+
+        private final int value;
+
+        PowerManagerRecoveryModeAccessOptions(int value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return String.valueOf(value);
+        }
+    }
+
+    public enum UsbClientModeDefaultOptions {
+        DO_NOT_CHANGE(0),
+        CHARGING_ONLY(1),
+        FILE_TRANSFER(2),
+        PTP(3),
+        USB_TETHERING(4),
+        USB_STORAGE(5);
+
+        private final int value;
+
+        UsbClientModeDefaultOptions(int value) {
+            this.value = value;
+        }
+
+        public String getString() {
+            return String.valueOf(value);
         }
     }
 }

@@ -4,11 +4,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-
-import java.util.function.Consumer;
 
 /**
  * A utility class for retrieving OEM information from the device.
@@ -18,8 +14,6 @@ public final class OEMInfoHelper {
 
     private static final String TAG = OEMInfoHelper.class.getSimpleName();
 
-
-    
     /**
      * Private constructor to prevent instantiation of this utility class.
      */

@@ -15,6 +15,10 @@ class ProcessProfileTask extends AsyncTask<Void, Void, EMDKResults> {
 
     private static final String TAG = ProcessProfileTask.class.getSimpleName();
 
+    ProcessProfileTask(Delegate delegate) {
+        this.delegate = delegate;
+    }
+
     public interface Delegate {
         EMDKResults processProfile();
         void processProfileSuccess();
@@ -22,10 +26,6 @@ class ProcessProfileTask extends AsyncTask<Void, Void, EMDKResults> {
     }
 
     private final Delegate delegate;
-
-    ProcessProfileTask(Delegate delegate) {
-        this.delegate = delegate;
-    }
 
     @Override
     protected EMDKResults doInBackground(Void... voids) {
