@@ -21,6 +21,7 @@ public class OEMInfoActivity extends AppCompatActivity {
 
     private MXBase.TouchPanelSensitivityOptions currentTouchPanelSensitivity
             = MXBase.TouchPanelSensitivityOptions.DO_NOTHING;
+    private Boolean isSettingTouchPanelSensitivity = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,12 +112,16 @@ public class OEMInfoActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 binding.textCurrentTouchMode.setText("Current Touch Mode: " + currentTouchPanelSensitivity.getXmlValue());
-                MXHelper.setTouchPanelSensitivity(
-                        context,
-                        currentTouchPanelSensitivity,
-                        (success) -> {
-                            Toast.makeText(context, "Set Touch Mode Success? " + success, Toast.LENGTH_LONG).show();
-                        });
+                if (isSettingTouchPanelSensitivity == false) {
+                    isSettingTouchPanelSensitivity = true;
+                    MXHelper.setTouchPanelSensitivity(
+                            context,
+                            currentTouchPanelSensitivity,
+                            (success) -> {
+                                isSettingTouchPanelSensitivity = false;
+                                Toast.makeText(context, "Set Touch Mode Success? " + success, Toast.LENGTH_LONG).show();
+                            });
+                }
             }
         });
     }
